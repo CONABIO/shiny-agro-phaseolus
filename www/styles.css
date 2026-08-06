@@ -1,0 +1,175 @@
+/* www/styles.css */
+@import url('https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&family=Oswald:wght@500;600&display=swap');
+
+/* ---------------------------------------------------------------------------
+   TIPOGRAFÍA GLOBAL — aplica a toda la Shiny.
+   Se define solo la FAMILIA (y el color de texto), no los tamaños: los tamaños
+   grandes de la introducción sí van acotados a .contenido-frijol más abajo,
+   porque aplicados a toda la app descuadran los recuadros de Visualización,
+   el menú lateral y los controles.
+   --------------------------------------------------------------------------- */
+
+body,
+.content-wrapper,
+.main-sidebar,
+.box,
+.form-control,
+.selectize-input,
+button,
+input,
+select,
+textarea,
+label {
+  font-family: 'PT Sans', -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6,
+.box-title {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+}
+
+/* Estilos del bloque de introducción: aquí sí van los tamaños grandes */
+
+.contenido-frijol {
+  max-width: 720px;
+  margin: 0 auto;
+  font-size: 17.6px;
+  line-height: 1.5;
+  color: rgb(33, 37, 41);
+}
+
+.contenido-frijol p {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.contenido-frijol h1,
+.contenido-frijol h2,
+.contenido-frijol h3,
+.contenido-frijol h4 {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  color: rgb(33, 37, 41);
+}
+
+.contenido-frijol h1 {
+  font-size: 36.8px;
+  line-height: 1.2;
+  margin-top: 10px;
+  margin-bottom: 8px;
+}
+
+.contenido-frijol h2,
+.contenido-frijol h3,
+.contenido-frijol h4 {
+  font-size: 23.4px;
+  line-height: 1.2;
+  margin-top: 24px;
+  margin-bottom: 8px;
+}
+
+.contenido-frijol a {
+  color: rgb(142, 104, 69);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* Cajas de Visualización (Distribución, Altitud, Época, Waffle) del mismo tamaño */
+
+.visualizacion-cajas .row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.visualizacion-cajas .row > div[class*="col-"] {
+  display: flex;
+}
+
+.visualizacion-cajas .box {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.visualizacion-cajas .box-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.visualizacion-cajas .box-body img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  margin-top: auto;
+}
+
+/* Frase centrada en el espacio del cintillo amarillo a la derecha del logo.
+   Se posiciona "fixed" respecto a la ventana del navegador (no a un ancestro
+   dentro del header) para no depender de floats/márgenes internos de AdminLTE
+   que hacían que el texto se saliera de la pantalla. */
+
+.navbar-frase {
+  position: fixed;
+  top: 0;
+  left: 200px; /* coincide con titleWidth del dashboardHeader */
+  right: 0;
+  height: 50px; /* alto estándar del header de AdminLTE */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 1030;
+  font-family: 'Oswald', sans-serif;
+  font-size: 36.8px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: rgb(33, 37, 41);
+  pointer-events: none;
+}
+
+/* Filtros del mapa de Distribución (selectizeGroupUI): que las etiquetas
+   seleccionadas se apilen hacia abajo en vez de desbordarse hacia la derecha */
+
+#controls .selectize-input {
+  flex-wrap: wrap;
+  height: auto;
+  max-width: 100%;
+  min-height: 18px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+/* Las cajas ocupan el 100% del panel (el panel en sí ya se achicó a 150px de ancho) */
+#controls .shiny-input-container {
+  width: 100% !important;
+}
+
+/* Reducir a la mitad el espacio vertical que ocupa cada filtro
+   (Bootstrap por defecto: label margin-bottom 5px, form-group margin-bottom 15px) */
+
+#controls .form-group {
+  margin-bottom: 7px;
+}
+
+#controls label {
+  margin-bottom: 2px;
+}
+
+/* Menú lateral: permitir que los nombres largos se acomoden en varios renglones
+   en vez de cortarse (AdminLTE usa white-space: nowrap por defecto) */
+
+.sidebar-menu > li > a {
+  white-space: normal;
+  line-height: 1.3;
+}
+
+/* El ícono se alinea arriba para que no quede centrado respecto al texto de 2 renglones */
+.sidebar-menu > li > a > .fa,
+.sidebar-menu > li > a > .fas,
+.sidebar-menu > li > a > .far,
+.sidebar-menu > li > a > svg {
+  vertical-align: top;
+  margin-top: 2px;
+}
