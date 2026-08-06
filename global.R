@@ -1,5 +1,6 @@
 library(tidyverse)
 library(readxl)
+library(markdown)
 library(leaflet)
 library(RColorBrewer)
 library(plyr)
@@ -11,6 +12,91 @@ library(ggthemes)
 library(ggmap)
 library(ggalt)
 library(colorspace)
+library(wesanderson)
+
+# Paleta FantasticFox1 de wesanderson, para que el usuario elija el color de la
+# gráfica de Floración y fructificación. Los nombres son los que ve en el selector.
+paleta_fox <- setNames(
+  as.character(wes_palette("FantasticFox1")),
+  c("Ocre", "Amarillo", "Azul", "Naranja", "Rojo")
+)
+
+# ---------------------------------------------------------------------------
+# Paletas para la gráfica de proporción (waffle).
+#
+# Las paletas de wesanderson traen solo 4-6 colores, y el waffle puede llegar a ~27
+# especies. Interpolar UNA sola paleta hasta 27 deja tonos casi idénticos entre
+# especies vecinas, así que en vez de eso **cada opción encadena varias paletas**
+# para juntar suficientes matices realmente distintos.
+# ---------------------------------------------------------------------------
+combos_waffle <- list(
+  "Vívida"          = c("Zissou1", "Darjeeling1", "FantasticFox1", "Royal1", "Chevalier1"),
+  "Tierra y verdes" = c("Cavalcanti1", "Moonrise2", "Royal2", "IsleofDogs2", "Chevalier1"),
+  "Cálida"          = c("GrandBudapest1", "Rushmore1", "BottleRocket2", "GrandBudapest2", "Moonrise1"),
+  "Variada"         = c("AsteroidCity1", "AsteroidCity2", "FrenchDispatch", "IsleofDogs1", "Darjeeling2")
+)
+
+# Junta las paletas de un combo y quita colores repetidos
+paleta_combinada <- function(nombre_combo) {
+  unique(unlist(lapply(combos_waffle[[nombre_combo]],
+                       function(p) as.character(wes_palettes[[p]])),
+                use.names = FALSE))
+}
+
+# Devuelve n colores del combo elegido. Si alcanzan, se toman tal cual (así quedan
+# bien diferenciados); si se piden más de los que hay, se interpola para completar.
+colores_waffle <- function(nombre_combo, n) {
+  base <- paleta_combinada(nombre_combo)
+  if (n <= length(base)) base[seq_len(n)] else colorRampPalette(base)(n)
+}
+
+nombres_combos <- names(combos_waffle)
+
+# ---------------------------------------------------------------------------
+# Altitud de las capitales de los 32 estados (metros sobre el nivel del mar).
+# Sirven como línea de referencia en la gráfica de Altitud: la gente ubica su
+# ciudad y ve de inmediato qué frijoles crecen a esa altura.
+#
+# ⚠️ REVISAR: estos valores son APROXIMADOS y están puestos como punto de
+# partida. Antes de publicar conviene verificarlos contra una fuente
+# autoritativa (INEGI). Es la única tabla que hay que tocar para corregirlos.
+# ---------------------------------------------------------------------------
+capitales_altitud <- data.frame(
+  ciudad = c(
+    "Aguascalientes", "Mexicali", "La Paz", "Campeche", "Tuxtla Gutiérrez",
+    "Chihuahua", "Ciudad de México", "Saltillo", "Colima", "Durango",
+    "Guanajuato", "Chilpancingo", "Pachuca", "Guadalajara", "Toluca",
+    "Morelia", "Cuernavaca", "Tepic", "Monterrey", "Oaxaca de Juárez",
+    "Puebla", "Querétaro", "Chetumal", "San Luis Potosí", "Culiacán",
+    "Hermosillo", "Villahermosa", "Ciudad Victoria", "Tlaxcala", "Xalapa",
+    "Mérida", "Zacatecas"
+  ),
+  altitud = c(
+    1880,   3,   27,   10,  522,
+    1415, 2350, 1600,  494, 1890,
+    2000, 1360, 2400, 1566, 2660,
+    1920, 1510,  915,  540, 1555,
+    2135, 1820,   10, 1860,   54,
+     210,   10,  321, 2240, 1427,
+      10, 2440
+  ),
+  stringsAsFactors = FALSE
+)
+# Se ordenan de menor a mayor altitud para que el selector sea más útil
+capitales_altitud <- capitales_altitud[order(capitales_altitud$altitud), ]
+capitales_opciones <- setNames(
+  capitales_altitud$ciudad,
+  paste0(capitales_altitud$ciudad, " (", capitales_altitud$altitud, " m)")
+)
+
+# NOTA sobre la tipografía de las gráficas:
+# El CSS de www/styles.css aplica a toda la interfaz HTML, pero NO a las gráficas,
+# porque esas son imágenes que genera R. Se intentó pasarle "PT Sans" a ggplot con
+# theme_minimal(base_family = "PT Sans") y **desaparece todo el texto de la gráfica**
+# (etiquetas y marcas de los ejes incluidas) en el contexto de esta app, aunque la
+# fuente sí esté instalada y funcione en pruebas aisladas. Además tampoco existiría
+# en la imagen Docker del servidor. Por eso las gráficas se dejan con la tipografía
+# por defecto de ggplot, que renderiza de forma confiable en cualquier entorno.
 
 Mex <- read_xlsx("data/PhaseolusEne2026_JE014_Unida.xlsx", 
                  sheet = "@PhaseolusEne2026", col_names = T)
@@ -63,7 +149,9 @@ Mex3 <- Mex2 %>%
   dplyr::mutate(Estado = revalue(Estado,c("HUEHUETENANGO" = "Huehuetenango"))) %>%
   dplyr::mutate(Estado = revalue(Estado,c("NEW MEXICO" = "New Mexico"))) %>%
   dplyr::filter(Habitat.1 != "ND") %>%
-  dplyr::filter(Habitat.1 != "Híbrido") %>% 
+  dplyr::filter(Habitat.1 != "Híbrido") %>%
+  # Huehuetenango (Guatemala) se excluye de todo el análisis, incluido el mapa
+  dplyr::filter(Estado != "Huehuetenango") %>%
   mutate(Altitud = replace(Altitud, Altitud == 9999, NA))
 
 Mex3$AnioColecta <- as.factor(Mex3$AnioColecta)
@@ -75,6 +163,7 @@ Mex3$RatingCol <- as.factor(Mex3$RatingCol)
 
 
 
+# Se excluyen también las localidades de EUA (Huehuetenango ya salió en Mex3)
 Mex4 <- Mex3 %>%
   filter(Estado != "Arizona") %>%
   filter(Estado != "Texas") %>%
@@ -83,30 +172,19 @@ Mex4 <- Mex3 %>%
 Mex4$Estado <- factor(Mex4$Estado)
   
 
-#Para la Altitud
-Mex5 <- Mex4 %>%
-  select(Especie, Altitud) %>%
-  group_by(Especie) %>%
-  summarise(minimo = min(Altitud, na.rm = T),
-            prom = mean(Altitud, na.rm = T),
-            maximo = max(Altitud, na.rm = T),
-            rango = maximo - minimo) %>%
-  na.omit()
-
-Mex7 <- Mex5 %>% 
-  arrange(prom) %>% 
-  mutate(ordenar1 = prom)
-
-Mex8 <- Mex5 %>% 
-  arrange(maximo) %>% 
-  mutate(ordenar1 = maximo )
-
-Mex9 <- Mex5 %>% 
-  arrange(minimo) %>% 
-  mutate(ordenar1 = minimo)
+# Nota: los rangos altitudinales por especie (antes precalculados aquí como
+# Mex5/Mex7/Mex8/Mex9) ahora se calculan en server.R dentro del reactivo Mex10(),
+# porque dependen de los estados que elija el usuario.
 
 FloFru <- read_xlsx("data/Flor_fruc.xlsx", sheet = "Rdata", col_names = T)
 
 FloFru$Epoca <- as.factor(FloFru$Epoca)
 FloFru$Tipo <- as.factor(FloFru$Tipo)
+
+# Convierte un archivo .md a HTML y fuerza que todas las ligas abran en pestaña nueva
+includeMarkdownNewTab <- function(path) {
+  html <- markdown::markdownToHTML(path, fragment.only = TRUE)
+  html <- gsub("<a href=", '<a target="_blank" rel="noopener noreferrer" href=', html, fixed = TRUE)
+  shiny::HTML(html)
+}
 
