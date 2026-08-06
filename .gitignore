@@ -4,4 +4,5 @@
 .Rprofile
 .Ruserdata
 .DS_Store
-renvRplots.pdf
+renv
+Rplots.pdf
