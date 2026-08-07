@@ -13,6 +13,8 @@ library(ggthemes)
 library(waffle)
 library(shinyWidgets)
 library(ggiraph)
+library(ggrepel)
+library(datamods)
 #library(gganimate)
 
 # Define server logic for slider examples
@@ -60,15 +62,18 @@ shinyServer(
 
     
     # Filtros cruzados del mapa de Distribución (Condición, Estado, Especie).
-    # selectizeGroupServer acota las opciones de cada selector según los demás
-    # Y devuelve directamente el data frame ya filtrado — reemplaza el
-    # observeEvent de 7 combinaciones if/else + el reactive() manual que había antes.
-    points <- callModule(
-      module = selectizeGroupServer,
-      id = "my_filters",
-      data = Mex3,
-      vars = c("Habitat.1", "Estado", "Especie"),
-      inline = FALSE
+    # Acota las opciones de cada selector según los demás y devuelve el data frame ya
+    # filtrado — reemplaza el observeEvent de 7 combinaciones if/else + el reactive()
+    # manual que había originalmente.
+    #
+    # Se usa datamods::select_group_server porque shinyWidgets marcó como obsoletas sus
+    # selectizeGroupUI/selectizeGroupServer y las va a retirar. Diferencias de la API:
+    #   - se llama directo, sin callModule (usa el patrón moduleServer moderno)
+    #   - los argumentos son REACTIVOS: data_r y vars_r, no data y vars
+    points <- select_group_server(
+      id     = "my_filters",
+      data_r = reactive(Mex3),
+      vars_r = reactive(c("Habitat.1", "Estado", "Especie"))
     )
     
     

@@ -11,6 +11,7 @@ library(httr)
 library(tableHTML)
 library(shinyWidgets)
 library(ggiraph)
+library(datamods)
 
 
 dashboardPage(
@@ -171,16 +172,27 @@ dashboardPage(
           fixed = F,
           style = "z-index:100;",
           class = "panel-default",
-          # Filtros cruzados (Condición, Estado, Especie) — shinyWidgets::selectizeGroupServer
+          # Filtros cruzados (Condición, Estado, Especie) — datamods::select_group_server
           # se encarga de acotar las opciones de cada uno según los demás
-          selectizeGroupUI(
+          # Ojo: datamods lee la etiqueta de cada filtro en `label`. shinyWidgets
+          # aceptaba `title`, pero aquí ese nombre se ignora y los filtros salen
+          # sin etiqueta, solo con un "Select" genérico.
+          select_group_ui(
             id = "my_filters",
             params = list(
-              Habitat.1 = list(inputId = "Habitat.1", title = "Condición:"),
-              Estado = list(inputId = "Estado", title = "Estado:"),
-              Especie = list(inputId = "Especie", title = "Especie:")
+              Habitat.1 = list(inputId = "Habitat.1", label = "Condición:",
+                               placeholder = "Todas"),
+              Estado    = list(inputId = "Estado",    label = "Estado:",
+                               placeholder = "Todos"),
+              Especie   = list(inputId = "Especie",   label = "Especie:",
+                               placeholder = "Todas")
             ),
-            inline = FALSE
+            btn_reset_label = "Limpiar filtros",
+            inline = FALSE,
+            # el panel es angosto (150px) y los nombres de especie se truncaban;
+            # se ensancha solo el desplegable y se le agrega buscador
+            vs_args = list(search = TRUE, dropboxWidth = "320px",
+                           searchPlaceholderText = "Buscar...")
           ),
 
           # Botón de descarga de datos
