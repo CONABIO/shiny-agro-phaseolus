@@ -173,3 +173,27 @@ h1, h2, h3, h4, h5, h6,
   vertical-align: top;
   margin-top: 2px;
 }
+
+/* Panel del selector de paleta del mapa (esquina inferior izquierda).
+   Necesita fondo propio: va encima del mapa y sin él el texto no se lee. */
+
+#paleta_mapa_panel {
+  background: rgba(255, 255, 255, 0.92);
+  padding: 8px 10px;
+  border-radius: 4px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.35);
+}
+
+#paleta_mapa_panel label {
+  font-size: 13px;
+  margin-bottom: 3px;
+}
+
+#paleta_mapa_panel .radio {
+  margin: 2px 0;
+}
+
+#paleta_mapa_panel .radio label {
+  font-size: 13px;
+  font-weight: normal;
+}

@@ -156,11 +156,9 @@ Mex$Altitud <- as.numeric(Mex$Altitud)
 Mex2 <- Mex %>% 
   rename("Longitud" = "Long_dec",
          "Latitud" = "Lat_dec",
-         "Habitat.1" = "Condición") %>% 
-  mutate(RatingCol = as.factor(Especie))
-levels(Mex2$RatingCol) <- rainbow_hcl(nlevels(Mex2$RatingCol),
-                                      c = 70,
-                                      l = 50)
+         "Habitat.1" = "Condición")
+# El color de cada punto del mapa ya no se precalcula aquí: ahora se resuelve al
+# dibujar, según la paleta que elija el usuario (ver paletas_mapa, más abajo).
 
 Mex3 <- Mex2 %>%
   dplyr::mutate(Estado = revalue(Estado,c("YUCATÁN" = "Yucatán"))) %>%
@@ -211,21 +209,59 @@ Mex3$AnioColecta <- as.factor(Mex3$AnioColecta)
 Mex3$Estado <- as.factor(Mex3$Estado)
 Mex3$Habitat.1 <- as.factor(Mex3$Habitat.1)
 Mex3$Especie <- as.factor(Mex3$Especie)
-Mex3$RatingCol <- as.factor(Mex3$RatingCol)
-
 
 # Antes existía un Mex4 que era Mex3 sin las localidades de EUA. Ahora esas ya salen
 # desde Mex3, así que Mex4 era una copia idéntica y se eliminó: Mex3 es la única
 # fuente de datos filtrados de la app.
 
+# ---------------------------------------------------------------------------
+# Paletas del mapa de Distribución (selector en la esquina inferior izquierda).
+#
+# El color del mapa NO pretende que se identifique cada especie: con 60 especies eso
+# es imposible de leer y además no hay leyenda. Su función es transmitir de un vistazo
+# la DIVERSIDAD; quien quiera el detalle usa los filtros y el popup de cada punto.
+#
+#  - Paleta 1: la original, un arcoíris HCL. rainbow_hcl mantiene constantes la
+#    luminosidad y la saturación, así que ninguna especie destaca artificialmente.
+#    Con 60 especies los tonos vecinos quedan a 6° y se ven como un degradado.
+#  - Paletas 2 y 3: armadas encadenando 10 paletas de wesanderson cada una y luego
+#    (a) quitando los colores a menos de 10 de distancia perceptual entre sí,
+#    (b) quitando los casi blancos y casi negros, que sobre el mapa claro de
+#        CartoDB.Positron no se verían, y
+#    (c) reordenando para que cada color sea el más lejano posible del anterior,
+#        de modo que al reciclarse sobre las 60 especies los vecinos contrasten.
+#    No comparten ningún color entre ellas.
+# ---------------------------------------------------------------------------
+paletas_mapa <- list(
+  "Paleta 1" = rainbow_hcl(nlevels(Mex3$Especie), c = 70, l = 50),
+  "Paleta 2" = c(
+    "#3B9AB2", "#F21A00", "#00A08A", "#C93312", "#85D4E3", "#F98400",
+    "#046C9A", "#E1AF00", "#5785C1", "#FBA72A", "#35274A", "#DD8D29",
+    "#78B7C5", "#B40F20", "#0B775E", "#FD6467", "#3F5151", "#D67236",
+    "#899DA4", "#A42820", "#CDC08C", "#5B1A18", "#E1BD6D", "#4E2A1E",
+    "#F1BB7B", "#5F5647", "#D69C4E", "#F4B5BD", "#9C964A", "#CB7A5C"
+  ),
+  "Paleta 3" = c(
+    "#9986A5", "#D8B70A", "#273046", "#C52E19", "#54D8B1", "#972D15",
+    "#90D4CC", "#AF4E24", "#7FC0C6", "#9A8822", "#39312F", "#CCBA72",
+    "#175149", "#F8AFA8", "#02401B", "#B67C3B", "#446455", "#CCC591",
+    "#79402E", "#81A88D", "#354823", "#C7B19C", "#798E87", "#AC9765",
+    "#8D8680", "#A2A475", "#AA9486"
+  )
+)
 
-# Se excluyen también las localidades de EUA (Huehuetenango ya salió en Mex3)
-Mex4 <- Mex3 %>%
-  filter(Estado != "Arizona") %>%
-  filter(Estado != "Texas") %>%
-  filter(Estado != "New Mexico")
+# Devuelve un vector de colores NOMBRADO POR ESPECIE. Que esté nombrado es lo que hace
+# que cada especie conserve su color al filtrar: el color se busca por nombre, no por
+# posición dentro del subconjunto filtrado.
+# Las paletas 2 y 3 tienen menos de 60 colores, así que se RECICLAN (rep_len) en vez de
+# interpolarse: interpolar generaría tonos intermedios casi idénticos y se perdería
+# justo el contraste que se buscaba.
+colores_mapa <- function(nombre) {
+  setNames(rep_len(paletas_mapa[[nombre]], nlevels(Mex3$Especie)),
+           levels(Mex3$Especie))
+}
 
-Mex4$Estado <- factor(Mex4$Estado)
+nombres_paletas_mapa <- names(paletas_mapa)
   
 
 # Nota: los rangos altitudinales por especie (antes precalculados aquí como

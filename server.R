@@ -87,34 +87,54 @@ shinyServer(
  #     options = layersControlOptions(collapsed = FALSE))
     
  #   map
-    output$mymap1 <- renderLeaflet(
-      {
-        Tabla3 <- points()
-        leaflet() %>%
-          addProviderTiles(providers$CartoDB.Positron, group = "Mapa") %>%
-          addProviderTiles(providers$Esri.WorldImagery, group = "Foto aérea") %>%
-          addCircles(data = Tabla3, group = "Circles",
-                     lng = ~Longitud, lat = ~Latitud,
-                     color = Tabla3$RatingCol, weight = 5, opacity = 0.7,
-                     popup = ~paste(sep = " ", "Especie:",Tabla3$Taxa,
-                                    "<br/>", "Condición:",Tabla3$Habitat.1,
-                                    "<br/>", "Estado:",Tabla3$Estado,
-                                    "<br/>", "Municipio:",Tabla3$Municipio,
-                                    "<br/>", "Localidad:",Tabla3$Localidad,
-                                    "<br/>", "Altitud:",Tabla3$Altitud, "metros",
-                                    "<br/>", "Año de colecta:", Tabla3$AnioColecta,
-                                    "<br/>", "<br/>", "NA, ND, 9999 = no hay dato")) %>%
-          addLayersControl(
-            baseGroups = c("Mapa", "Foto aérea"),
-            position = "topright",
-            options = layersControlOptions(collapsed = FALSE))
-      })
+    output$mymap1 <- renderLeaflet({
+      Tabla3 <- points()
+
+      # Vector de colores NOMBRADO POR ESPECIE. Que esté nombrado es lo que hace que
+      # cada especie conserve su color al filtrar: se busca por nombre, no por posición
+      # dentro del subconjunto que quedó visible.
+      colores <- colores_mapa(input$paleta_mapa)
+
+      # Cambiar un filtro o la paleta reconstruye el mapa entero, lo que normalmente
+      # devolvería la vista al encuadre inicial. Se lee el zoom y el centro actuales
+      # para restaurarlos y que la persona no pierda dónde estaba mirando.
+      # isolate() es IMPRESCINDIBLE: sin él, leer estos inputs —que el propio mapa
+      # actualiza al moverse— crearía un ciclo infinito de redibujado.
+      zoom_actual   <- isolate(input$mymap1_zoom)
+      centro_actual <- isolate(input$mymap1_center)
+
+      mapa <- leaflet() %>%
+        addProviderTiles(providers$CartoDB.Positron, group = "Mapa") %>%
+        addProviderTiles(providers$Esri.WorldImagery, group = "Foto aérea") %>%
+        addCircles(data = Tabla3, group = "Circles",
+                   lng = ~Longitud, lat = ~Latitud,
+                   color = unname(colores[as.character(Tabla3$Especie)]),
+                   weight = 5, opacity = 0.7,
+                   popup = ~paste(sep = " ", "Especie:",Tabla3$Taxa,
+                                  "<br/>", "Condición:",Tabla3$Habitat.1,
+                                  "<br/>", "Estado:",Tabla3$Estado,
+                                  "<br/>", "Municipio:",Tabla3$Municipio,
+                                  "<br/>", "Localidad:",Tabla3$Localidad,
+                                  "<br/>", "Altitud:",Tabla3$Altitud, "metros",
+                                  "<br/>", "Año de colecta:", Tabla3$AnioColecta,
+                                  "<br/>", "<br/>", "NA, ND, 9999 = no hay dato")) %>%
+        addLayersControl(
+          baseGroups = c("Mapa", "Foto aérea"),
+          position = "topright",
+          options = layersControlOptions(collapsed = FALSE))
+
+      if (!is.null(zoom_actual) && !is.null(centro_actual)) {
+        mapa <- mapa %>% setView(lng = centro_actual$lng, lat = centro_actual$lat,
+                                 zoom = zoom_actual)
+      }
+      mapa
+    })
  
   #Para la Floración    
     observeEvent(
       input$Estado1,
         updateSelectInput(session, inputId = "Especie1", label = "Especie:", 
-                          choice = c("All" ,levels(droplevels(Mex4$Especie[Mex4$Estado %in% input$Estado1])))))
+                          choice = c("All" ,levels(droplevels(Mex3$Especie[Mex3$Estado %in% input$Estado1])))))
     
     #Para las epocas de lluvia y Floración
     points1 <- reactive({

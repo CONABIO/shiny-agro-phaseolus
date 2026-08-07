@@ -162,7 +162,34 @@ dashboardPage(
         br(),
         fluidRow(
           tags$style("#mymap1 {height: calc(100vh - 10px) !important;}"),
-          leafletOutput('mymap1')
+          # El mapa y el selector de paleta van juntos en un div con position:relative.
+          # Es lo que hace que el `left` del panel se mida desde el borde del MAPA; si
+          # el panel quedara fuera, se posicionaría respecto a la página y se escondería
+          # detrás de la barra lateral.
+          div(
+            style = "position: relative;",
+            leafletOutput('mymap1'),
+            # Selector de paleta, abajo a la izquierda: esa esquina del mapa está libre
+            # (el zoom va arriba a la izquierda y la atribución abajo a la derecha).
+            # El color no identifica especies —son 60 y no hay leyenda—, sirve para
+            # transmitir la diversidad; el detalle se ve con los filtros y el popup.
+            absolutePanel(
+              id = "paleta_mapa_panel",
+              bottom = 25,
+              left = 25,
+              width = 120,
+              draggable = FALSE,
+              fixed = FALSE,
+              style = "z-index:400;",
+              class = "panel-default",
+              radioButtons(
+                inputId = "paleta_mapa",
+                label = "Colores:",
+                choices = nombres_paletas_mapa,
+                selected = nombres_paletas_mapa[1]
+              )
+            )
+          )
         ),
         absolutePanel(
           id = "controls",
