@@ -230,8 +230,8 @@ output$graph4 <- renderGirafe({
                           "mínimo"   = L$minimo)
       L <- L[order(L$ordenar), ]
       L$pos <- seq_len(nrow(L))
-      # Etiqueta abreviada: "Phaseolus vulgaris" -> "P. vulgaris"
-      L$etiqueta <- sub("^Phaseolus\\s+", "P. ", as.character(L$Especie))
+      # Etiqueta abreviada: "Phaseolus vulgaris" -> "P. vulgaris" (ver global.R)
+      L$etiqueta <- abreviar_especie(L$Especie)
       L
     })
 
@@ -243,9 +243,6 @@ output$graph4 <- renderGirafe({
       if (nrow(LL) == 0) return(600)
       max(650, nrow(LL) * 15 + 130)
     })
-
-    # Cada nombre va DESPEGUE metros encima de su propio punto, sin más ajustes.
-    y_nombres <- function(LL, alto_px) LL$ordenar + DESPEGUE
 
     ####
     # Perfil altitudinal al estilo del "Perfil de vegetación y fauna" del Atlas
@@ -259,24 +256,47 @@ output$graph4 <- renderGirafe({
                     "No hay datos de altitud para los estados seleccionados."))
 
       n <- nrow(LL)
-      # La cresta pasa EXACTAMENTE por el valor de cada especie, sin suavizar, para
-      # que cada punto quede posado sobre la superficie de la montaña.
-      # (Antes se suavizaba con loess(span = 0.9), pero eso dejaba los puntos
-      # flotando: 44 m de desviación promedio y hasta 168 m en el peor caso.)
-      # Como las especies vienen ordenadas por `ordenar`, la ladera sube limpia sin
-      # importar si se ordenó por promedio, máximo o mínimo.
-      montana <- data.frame(x = c(0.3, LL$pos, n + 0.7),
-                            y = c(0,   LL$ordenar, 0))
 
-      LL$y_nombre <- y_nombres(LL, alto_graph2())
-      techo <- max(LL$y_nombre) + DESPEGUE
+      # La montaña se dibuja en TRES capas anidadas (mínimo, promedio y máximo), para
+      # que se vea de un vistazo toda la franja altitudinal que ocupa el género.
+      #
+      # La ladera de la variable ELEGIDA en el selector va exacta, sin suavizar, para
+      # que cada punto quede posado sobre su superficie. Las otras dos se suavizan:
+      # al no ser el criterio de orden, saltan bruscamente entre especies vecinas y
+      # sin suavizar salen como una sierra de picos que arruina la figura.
+      suavizar <- function(v) {
+        if (length(v) < 5) return(pmax(v, 0))
+        pmax(stats::predict(stats::loess(v ~ LL$pos, span = 0.5)), 0)
+      }
+      cresta_min  <- if (input$var11 == "mínimo")   LL$minimo else suavizar(LL$minimo)
+      cresta_prom <- if (input$var11 == "promedio") LL$prom   else suavizar(LL$prom)
+      cresta_max  <- if (input$var11 == "máximo")   LL$maximo else suavizar(LL$maximo)
 
-      # Los nombres se alternan: uno sale hacia la izquierda de su punto y el
-      # siguiente hacia la derecha. Como los que se encinan son siempre vecinos,
-      # al mandarlos a lados opuestos dejan de estorbarse.
-      LL$lado     <- ifelse(LL$pos %% 2 == 1, -1, 1)
-      LL$x_nombre <- LL$pos + LL$lado * 0.15
-      LL$h        <- ifelse(LL$lado < 0, 1, 0)   # 1 = termina en el punto, 0 = arranca
+      # Al suavizar por separado, las curvas podrían cruzarse. Se fuerza que se respete
+      # mínimo <= promedio <= máximo, pero ajustando SIEMPRE las suavizadas y nunca la
+      # exacta: si se moviera la exacta, los puntos dejarían de posarse sobre ella.
+      if (input$var11 == "máximo") {
+        cresta_prom <- pmin(cresta_prom, cresta_max)
+        cresta_min  <- pmin(cresta_min,  cresta_prom)
+      } else if (input$var11 == "mínimo") {
+        cresta_prom <- pmax(cresta_prom, cresta_min)
+        cresta_max  <- pmax(cresta_max,  cresta_prom)
+      } else {                                   # promedio
+        cresta_min <- pmin(cresta_min, cresta_prom)
+        cresta_max <- pmax(cresta_max, cresta_prom)
+      }
+
+      poligono <- function(cresta) {
+        data.frame(x = c(0.3, LL$pos, n + 0.7), y = c(0, cresta, 0))
+      }
+
+      # Espacio libre arriba para que ggrepel tenga a dónde mover los nombres
+      techo <- max(LL$ordenar) + DESPEGUE * 3
+
+      # Los nombres se alternan: uno tiende hacia la izquierda de su punto y el
+      # siguiente hacia la derecha. Ya no es una posición fija sino un sesgo que se le
+      # pasa a ggrepel (nudge_x), porque él decide la posición final para evitar choques.
+      LL$lado <- ifelse(LL$pos %% 2 == 1, -1, 1)
 
       # Líneas de referencia de las capitales elegidas. Se dibujan primero para que
       # queden por debajo de los datos y no los tapen.
@@ -299,24 +319,50 @@ output$graph4 <- renderGirafe({
       # al pasar el mouse por el punto, su línea punteada o su nombre, los tres se
       # resaltan a la vez (el estilo del resaltado se define en girafe(), más abajo).
       uno <- ggplot() +
-        geom_polygon(data = montana, aes(x, y), fill = "#EFE0C4", colour = NA) +
+        # de la más clara (máximo) a la más oscura (mínimo), para que queden anidadas
+        geom_polygon(data = poligono(cresta_max),  aes(x, y), fill = "#F7EFE0", colour = NA) +
+        geom_polygon(data = poligono(cresta_prom), aes(x, y), fill = "#E8D5B0", colour = NA) +
+        geom_polygon(data = poligono(cresta_min),  aes(x, y), fill = "#CBB185", colour = NA) +
         capa_capitales +
-        # línea punteada que une el punto con su nombre
-        geom_segment_interactive(
-          data = LL,
-          aes(x = pos, xend = pos, y = ordenar, yend = y_nombre, data_id = Especie),
-          colour = "grey45", linewidth = 0.4, linetype = "dashed") +
         geom_point_interactive(
           data = LL,
           aes(x = pos, y = ordenar, data_id = Especie,
               tooltip = paste0(Especie, "\n", round(ordenar), " m")),
           colour = "grey20", size = 1.8) +
-        geom_text_interactive(
+        # ggrepel reacomoda los nombres que se encimarían y dibuja él mismo la línea
+        # guía hasta su punto, así la línea sigue al nombre cuando lo tiene que mover.
+        # nudge_x los sesga al lado que les toca (se conserva el alternado izq/der) y
+        # nudge_y los levanta DESPEGUE metros sobre su punto.
+        geom_text_repel_interactive(
           data = LL,
-          aes(x = x_nombre, y = y_nombre, label = etiqueta, hjust = h,
+          aes(x = pos, y = ordenar, label = etiqueta,
               data_id = Especie,
               tooltip = paste0(Especie, "\n", round(ordenar), " m")),
-          size = 4, fontface = "italic", colour = "grey15") +
+          nudge_x = LL$lado * 0.6,
+          nudge_y = DESPEGUE,
+          size = 4, fontface = "italic", colour = "grey15",
+          segment.colour = "grey45", segment.linetype = "dashed",
+          segment.size = 0.4,
+          min.segment.length = 0,   # que siempre dibuje la línea guía
+          box.padding = 0.3, point.padding = 0.2,
+          max.overlaps = Inf,       # IMPRESCINDIBLE: si no, descarta nombres en silencio
+          seed = 42) +              # para que el acomodo sea reproducible
+        # Contador de especies visibles, arriba a la izquierda: es la zona vacía de la
+        # figura, porque la montaña asciende de izquierda a derecha. Cambia al mover el
+        # filtro de estados.
+        # Se ancla a la ALTURA DE LA ESPECIE MÁS ALTA (no al borde del panel) para que
+        # se lea como parte de la gráfica y no como una tercera línea del título.
+        # Va al final del + para quedar dibujado ENCIMA de todo: ggrepel no sabe que
+        # existe y podría mandar un nombre a esa esquina.
+        annotate("text", x = -Inf, y = max(LL$ordenar), label = n,
+                 hjust = -0.25, vjust = 0.5,
+                 size = 20, fontface = "bold", colour = "#7A5C2E") +
+        annotate("text", x = -Inf, y = max(LL$ordenar),
+                 label = if (n == 1) "especie" else "especies",
+                 # vjust se mide en altos de SU PROPIA letra, no de la del número:
+                 # por eso hace falta un valor grande para librar los dígitos
+                 hjust = -0.32, vjust = 4,
+                 size = 6, colour = "#7A5C2E") +
         scale_y_continuous(breaks = seq(0, 3000, 1000),
                            labels = paste0(seq(0, 3000, 1000), " m"),
                            limits = c(0, techo), expand = c(0, 0)) +
@@ -328,7 +374,9 @@ output$graph4 <- renderGirafe({
                                       "promedio" = "promedio",
                                       "máximo"   = "máxima",
                                       "mínimo"   = "mínima"),
-                               " de la especie"),
+                               " de la especie\n",
+                               "Las bandas de la montaña muestran el rango altitudinal: ",
+                               "mínimo (tono oscuro), promedio y máximo (tono claro)"),
              x = NULL, y = NULL) +
         theme_minimal() +
         theme(plot.title = element_text(size = 18, face = "bold", hjust = 0.5),
@@ -429,20 +477,27 @@ output$graph4 <- renderGirafe({
       nota_raras <- if (nrow(raras) > 0) {
         paste0("Especies presentes que no alcanzan el 1% de los registros y por eso no ",
                "ocupan ningún cuadro (se muestran en la fila inferior):\n",
-               paste(raras$Especie, collapse = ", "), ".")
+               paste(abreviar_especie(raras$Especie), collapse = ", "), ".")
       } else NULL
 
       dos <- ggplot(celdas, aes(x = columna, y = fila)) +
         geom_tile_interactive(
           aes(fill = Especie, data_id = Especie, tooltip = tip),
           colour = "white", linewidth = 0.8, width = 0.9, height = 0.9) +
-        scale_fill_manual(values = mypalette, name = "Especies", drop = FALSE) +
+        # labels solo abrevia lo que se ve en la leyenda; el valor del factor sigue
+        # siendo el nombre completo, así que data_id y tooltip no se alteran
+        scale_fill_manual(values = mypalette, name = "Especies", drop = FALSE,
+                          labels = abreviar_especie) +
         coord_equal() +
         labs(title = "Proporción de especies de frijol",
              subtitle = "(Nota: Basado en el número de registros de cada especie por estado)",
              caption = nota_raras,
              x = NULL, y = NULL) +
-        guides(fill = guide_legend(title.theme = element_text(size = 20))) +
+        # nrow = 11 limita la leyenda a 11 renglones: si hay más especies (Michoacán,
+        # Nayarit) se desbordan a una segunda columna en vez de crecer hacia abajo y
+        # encimarse con la nota al pie. Con pocas especies queda una sola columna.
+        guides(fill = guide_legend(nrow = 11,
+                                   title.theme = element_text(size = 20))) +
         theme_minimal() +
         theme(legend.text = element_text(size = 15, face = "italic"),
               legend.key.size = unit(0.9, "cm"),

@@ -52,6 +52,11 @@ colores_waffle <- function(nombre_combo, n) {
 
 nombres_combos <- names(combos_waffle)
 
+# "Phaseolus vulgaris" -> "P. vulgaris". Todas las especies de la app son del mismo
+# género, así que repetirlo en cada etiqueta solo gasta espacio. El nombre completo se
+# conserva en los tooltips.
+abreviar_especie <- function(x) sub("^Phaseolus\\s+", "P. ", as.character(x))
+
 # ---------------------------------------------------------------------------
 # Altitud de las capitales de los 32 estados (metros sobre el nivel del mar).
 # Sirven como línea de referencia en la gráfica de Altitud: la gente ubica su
