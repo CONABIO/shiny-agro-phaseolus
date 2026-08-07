@@ -52,7 +52,8 @@ dashboardPage(
         tabName = "widgets3",
         icon = icon("adjust")
       ),
-      menuItem("Proporción de especies de frijol por estado", tabName = "widgets2", icon = icon("th"))
+      menuItem("Proporción de especies de frijol por estado", tabName = "widgets2", icon = icon("th")),
+      menuItem("Referencias", tabName = "referencias", icon = icon("book"))
       # menuItem("Autores", tabName = "conabio", icon = icon("user")) # oculto temporalmente
     )
   ),
@@ -343,7 +344,23 @@ dashboardPage(
         )
       ), # close  tabItem
 
-#####    
+#####
+      ## Referencias — el proyecto, informe y base de datos de donde salen los datos.
+      ## Mismo patrón que la Introducción: el texto vive en un .md aparte y se inyecta
+      ## con includeMarkdownNewTab para que las ligas abran en pestaña nueva.
+      tabItem(
+        tabName = "referencias",
+        fluidRow(
+          column(
+            width = 10, offset = 1,
+            # el cintillo superior mide 50px; sin este margen el título se le encima
+            div(class = "contenido-frijol", style = "margin-top: 35px;",
+                includeMarkdownNewTab("extra_files/frijol_referencias.md"))
+          )
+        )
+      ), # close  tabItem
+
+#####
       # About Page
       tabItem(
         tabName = "conabio",

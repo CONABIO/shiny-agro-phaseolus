@@ -36,12 +36,8 @@ gran diversidad culinaria.
 
 ## Visualización de frijoles de México
 
-Los datos de esta visualización son de proyectos donde la **CONABIO** ha contribuido en la 
-sistematización de esta información:
-- El Género Phaseolus (Leguminosae, Papilionoideae, Phaseoleae) para México; a cargo 
-del Dr. Alfonso Delgado Salinas. Para su consulta visita su página en [CONABIO](http://www.conabio.gob.mx/institucion/cgi-bin/datos2.cgi?Letras=JE&Numero=14)
-- 
-
+Los datos de esta visualización son parte de los proyectos e informes que la CONABIO ha contribuido 
+en su sistematización  y forma parte del Sistema de Información sobre Agrobiodiversidad [SIAgroBD](https://siagro.conabio.gob.mx/).
 
 
 
