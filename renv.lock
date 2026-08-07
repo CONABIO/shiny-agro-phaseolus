@@ -205,6 +205,91 @@
       "Maintainer": "Martin Maechler <mmaechler+Matrix@gmail.com>",
       "Repository": "CRAN"
     },
+    "R.methodsS3": {
+      "Package": "R.methodsS3",
+      "Version": "1.8.2",
+      "Source": "Repository",
+      "Depends": [
+        "R (>= 2.13.0)"
+      ],
+      "Imports": [
+        "utils"
+      ],
+      "Suggests": [
+        "codetools"
+      ],
+      "Title": "S3 Methods Simplified",
+      "Authors@R": "c(person(\"Henrik\", \"Bengtsson\", role=c(\"aut\", \"cre\", \"cph\"), email = \"henrikb@braju.com\"))",
+      "Author": "Henrik Bengtsson [aut, cre, cph]",
+      "Maintainer": "Henrik Bengtsson <henrikb@braju.com>",
+      "Description": "Methods that simplify the setup of S3 generic functions and S3 methods.  Major effort has been made in making definition of methods as simple as possible with a minimum of maintenance for package developers.  For example, generic functions are created automatically, if missing, and naming conflict are automatically solved, if possible.  The method setMethodS3() is a good start for those who in the future may want to migrate to S4.  This is a cross-platform package implemented in pure R that generates standard S3 methods.",
+      "License": "LGPL (>= 2.1)",
+      "LazyLoad": "TRUE",
+      "URL": "https://github.com/HenrikBengtsson/R.methodsS3",
+      "BugReports": "https://github.com/HenrikBengtsson/R.methodsS3/issues",
+      "NeedsCompilation": "no",
+      "Repository": "CRAN",
+      "Encoding": "UTF-8"
+    },
+    "R.oo": {
+      "Package": "R.oo",
+      "Version": "1.27.1",
+      "Source": "Repository",
+      "Depends": [
+        "R (>= 2.13.0)",
+        "R.methodsS3 (>= 1.8.2)"
+      ],
+      "Imports": [
+        "methods",
+        "utils"
+      ],
+      "Suggests": [
+        "tools"
+      ],
+      "Title": "R Object-Oriented Programming with or without References",
+      "Authors@R": "c(person(\"Henrik\", \"Bengtsson\", role=c(\"aut\", \"cre\", \"cph\"), email = \"henrikb@braju.com\"))",
+      "Author": "Henrik Bengtsson [aut, cre, cph]",
+      "Maintainer": "Henrik Bengtsson <henrikb@braju.com>",
+      "Description": "Methods and classes for object-oriented programming in R with or without references.  Large effort has been made on making definition of methods as simple as possible with a minimum of maintenance for package developers.  The package has been developed since 2001 and is now considered very stable.  This is a cross-platform package implemented in pure R that defines standard S3 classes without any tricks.",
+      "License": "LGPL (>= 2.1)",
+      "LazyLoad": "TRUE",
+      "URL": "https://henrikbengtsson.github.io/R.oo/, https://github.com/HenrikBengtsson/R.oo",
+      "BugReports": "https://github.com/HenrikBengtsson/R.oo/issues",
+      "NeedsCompilation": "no",
+      "Repository": "CRAN",
+      "Encoding": "UTF-8"
+    },
+    "R.utils": {
+      "Package": "R.utils",
+      "Version": "2.13.0",
+      "Source": "Repository",
+      "Depends": [
+        "R (>= 2.14.0)",
+        "R.oo"
+      ],
+      "Imports": [
+        "methods",
+        "utils",
+        "tools",
+        "R.methodsS3"
+      ],
+      "Suggests": [
+        "datasets",
+        "digest (>= 0.6.10)"
+      ],
+      "Title": "Various Programming Utilities",
+      "Authors@R": "c(person(\"Henrik\", \"Bengtsson\", role=c(\"aut\", \"cre\", \"cph\"), email = \"henrikb@braju.com\"))",
+      "Author": "Henrik Bengtsson [aut, cre, cph]",
+      "Maintainer": "Henrik Bengtsson <henrikb@braju.com>",
+      "Description": "Utility functions useful when programming and developing R packages.",
+      "License": "LGPL (>= 2.1)",
+      "LazyLoad": "TRUE",
+      "URL": "https://henrikbengtsson.github.io/R.utils/, https://github.com/HenrikBengtsson/R.utils",
+      "BugReports": "https://github.com/HenrikBengtsson/R.utils/issues",
+      "NeedsCompilation": "no",
+      "Repository": "CRAN",
+      "Encoding": "UTF-8"
+    },
     "R6": {
       "Package": "R6",
       "Version": "2.6.1",
@@ -1347,6 +1432,55 @@
       "Maintainer": "Tyson Barrett <t.barrett88@gmail.com>",
       "Repository": "CRAN"
     },
+    "datamods": {
+      "Package": "datamods",
+      "Version": "1.5.3",
+      "Source": "Repository",
+      "Title": "Modules to Import and Manipulate Data in 'Shiny'",
+      "Authors@R": "c(person(given = \"Victor\", family = \"Perrier\", role = c(\"aut\", \"cre\", \"cph\"), email = \"victor.perrier@dreamrs.fr\"), person(given = \"Fanny\", family = \"Meyer\", role = \"aut\"), person(given = \"Samra\", family = \"Goumri\", role = \"aut\"), person(given = \"Zauad Shahreer\", family = \"Abeer\", role = \"aut\", email = \"shahreyar.abeer@gmail.com\"), person(given = \"Eduard\", family = \"Szöcs\", role = \"ctb\", email = \"eduardszoecs@gmail.com\") )",
+      "Description": "'Shiny' modules to import data into an application or 'addin' from various sources, and to manipulate them after that.",
+      "License": "GPL-3",
+      "URL": "https://github.com/dreamRs/datamods, https://dreamrs.github.io/datamods/",
+      "BugReports": "https://github.com/dreamRs/datamods/issues",
+      "Encoding": "UTF-8",
+      "RoxygenNote": "7.3.2",
+      "Imports": [
+        "bslib",
+        "classInt",
+        "data.table",
+        "htmltools",
+        "phosphoricons",
+        "reactable",
+        "readxl",
+        "rio",
+        "rlang",
+        "shiny (>= 1.5.0)",
+        "shinyWidgets (>= 0.8.4)",
+        "tibble",
+        "toastui (>= 0.3.3)",
+        "tools",
+        "shinybusy",
+        "writexl"
+      ],
+      "Suggests": [
+        "ggplot2",
+        "jsonlite",
+        "knitr",
+        "MASS",
+        "rmarkdown",
+        "testthat",
+        "validate"
+      ],
+      "VignetteBuilder": "knitr",
+      "Depends": [
+        "R (>= 2.10)"
+      ],
+      "LazyData": "true",
+      "NeedsCompilation": "no",
+      "Author": "Victor Perrier [aut, cre, cph], Fanny Meyer [aut], Samra Goumri [aut], Zauad Shahreer Abeer [aut], Eduard Szöcs [ctb]",
+      "Maintainer": "Victor Perrier <victor.perrier@dreamrs.fr>",
+      "Repository": "CRAN"
+    },
     "dbplyr": {
       "Package": "dbplyr",
       "Version": "2.6.0",
@@ -1747,6 +1881,46 @@
       "Maintainer": "Winston Chang <winston@posit.co>",
       "Repository": "CRAN"
     },
+    "fontBitstreamVera": {
+      "Package": "fontBitstreamVera",
+      "Version": "0.1.1",
+      "Source": "Repository",
+      "Title": "Fonts with 'Bitstream Vera Fonts' License",
+      "Authors@R": "c( person(\"Lionel\", \"Henry\", , \"lionel.hry@gmail.com\", c(\"cre\", \"aut\")), person(\"Bitstream\", role = \"cph\"))",
+      "Description": "Provides fonts licensed under the 'Bitstream Vera Fonts' license for the 'fontquiver' package.",
+      "Depends": [
+        "R (>= 3.0.0)"
+      ],
+      "License": "file LICENCE",
+      "Encoding": "UTF-8",
+      "LazyData": "true",
+      "RoxygenNote": "5.0.1",
+      "NeedsCompilation": "no",
+      "Author": "Lionel Henry [cre, aut], Bitstream [cph]",
+      "Maintainer": "Lionel Henry <lionel.hry@gmail.com>",
+      "License_is_FOSS": "yes",
+      "Repository": "CRAN"
+    },
+    "fontLiberation": {
+      "Package": "fontLiberation",
+      "Version": "0.1.0",
+      "Source": "Repository",
+      "Title": "Liberation Fonts",
+      "Authors@R": "c( person(\"Lionel\", \"Henry\", , \"lionel@rstudio.com\", \"cre\"), person(\"Pravin Satpute\", role = \"aut\"), person(\"Steve Matteson\", role = \"aut\"), person(\"Red Hat, Inc\", role = \"cph\"), person(\"Google Corporation\", role = \"cph\"))",
+      "Description": "A placeholder for the Liberation fontset intended for the `fontquiver` package. This fontset covers the 12 combinations of families (sans, serif, mono) and faces (plain, bold, italic, bold italic) supported in R graphics devices.",
+      "Depends": [
+        "R (>= 3.0)"
+      ],
+      "License": "file LICENSE",
+      "Encoding": "UTF-8",
+      "LazyData": "true",
+      "RoxygenNote": "5.0.1",
+      "NeedsCompilation": "no",
+      "Author": "Lionel Henry [cre], Pravin Satpute [aut], Steve Matteson [aut], Red Hat, Inc [cph], Google Corporation [cph]",
+      "Maintainer": "Lionel Henry <lionel@rstudio.com>",
+      "Repository": "CRAN",
+      "License_is_FOSS": "yes"
+    },
     "fontawesome": {
       "Package": "fontawesome",
       "Version": "0.5.3",
@@ -1780,6 +1954,34 @@
       "NeedsCompilation": "no",
       "Author": "Richard Iannone [aut, cre] (<https://orcid.org/0000-0003-3925-190X>), Christophe Dervieux [ctb] (<https://orcid.org/0000-0003-4474-2498>), Winston Chang [ctb], Dave Gandy [ctb, cph] (Font-Awesome font), Posit Software, PBC [cph, fnd]",
       "Maintainer": "Richard Iannone <rich@posit.co>",
+      "Repository": "CRAN"
+    },
+    "fontquiver": {
+      "Package": "fontquiver",
+      "Version": "0.2.1",
+      "Source": "Repository",
+      "Title": "Set of Installed Fonts",
+      "Authors@R": "c( person(\"Lionel\", \"Henry\", , \"lionel@rstudio.com\", c(\"cre\", \"aut\")), person(\"RStudio\", role = \"cph\"), person(\"George Douros\", role = \"cph\", comment = \"Symbola font\"))",
+      "Description": "Provides a set of fonts with permissive licences. This is useful when you want to avoid system fonts to make sure your outputs are reproducible.",
+      "Depends": [
+        "R (>= 3.0.0)"
+      ],
+      "Imports": [
+        "fontBitstreamVera (>= 0.1.0)",
+        "fontLiberation (>= 0.1.0)"
+      ],
+      "Suggests": [
+        "testthat",
+        "htmltools"
+      ],
+      "License": "GPL-3 | file LICENSE",
+      "Encoding": "UTF-8",
+      "LazyData": "true",
+      "RoxygenNote": "5.0.1",
+      "Collate": "'font-getters.R' 'fontset.R' 'fontset-bitstream-vera.R' 'fontset-dejavu.R' 'fontset-liberation.R' 'fontset-symbola.R' 'html-dependency.R' 'utils.R'",
+      "NeedsCompilation": "no",
+      "Author": "Lionel Henry [cre, aut], RStudio [cph], George Douros [cph] (Symbola font)",
+      "Maintainer": "Lionel Henry <lionel@rstudio.com>",
       "Repository": "CRAN"
     },
     "forcats": {
@@ -1822,6 +2024,36 @@
       "NeedsCompilation": "no",
       "Author": "Hadley Wickham [aut, cre], Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
       "Maintainer": "Hadley Wickham <hadley@posit.co>",
+      "Repository": "CRAN"
+    },
+    "foreign": {
+      "Package": "foreign",
+      "Version": "0.8-90",
+      "Source": "Repository",
+      "Priority": "recommended",
+      "Date": "2025-03-31",
+      "Title": "Read Data Stored by 'Minitab', 'S', 'SAS', 'SPSS', 'Stata', 'Systat', 'Weka', 'dBase', ...",
+      "Depends": [
+        "R (>= 4.0.0)"
+      ],
+      "Imports": [
+        "methods",
+        "utils",
+        "stats"
+      ],
+      "Authors@R": "c( person(\"R Core Team\", email = \"R-core@R-project.org\", role = c(\"aut\", \"cph\", \"cre\"), comment = c(ROR = \"02zz1nj61\")), person(\"Roger\", \"Bivand\", role = c(\"ctb\", \"cph\")), person(c(\"Vincent\", \"J.\"), \"Carey\", role = c(\"ctb\", \"cph\")), person(\"Saikat\", \"DebRoy\", role = c(\"ctb\", \"cph\")), person(\"Stephen\", \"Eglen\", role = c(\"ctb\", \"cph\")), person(\"Rajarshi\", \"Guha\", role = c(\"ctb\", \"cph\")), person(\"Swetlana\", \"Herbrandt\", role = \"ctb\"), person(\"Nicholas\", \"Lewin-Koh\", role = c(\"ctb\", \"cph\")), person(\"Mark\", \"Myatt\", role = c(\"ctb\", \"cph\")), person(\"Michael\", \"Nelson\", role = \"ctb\"), person(\"Ben\", \"Pfaff\", role = \"ctb\"), person(\"Brian\", \"Quistorff\", role = \"ctb\"), person(\"Frank\", \"Warmerdam\", role = c(\"ctb\", \"cph\")), person(\"Stephen\", \"Weigand\", role = c(\"ctb\", \"cph\")), person(\"Free Software Foundation, Inc.\", role = \"cph\"))",
+      "Contact": "see 'MailingList'",
+      "Copyright": "see file COPYRIGHTS",
+      "Description": "Reading and writing data stored by some versions of 'Epi Info', 'Minitab', 'S', 'SAS', 'SPSS', 'Stata', 'Systat', 'Weka', and for reading and writing some 'dBase' files.",
+      "ByteCompile": "yes",
+      "Biarch": "yes",
+      "License": "GPL (>= 2)",
+      "BugReports": "https://bugs.r-project.org",
+      "MailingList": "R-help@r-project.org",
+      "URL": "https://svn.r-project.org/R-packages/trunk/foreign/",
+      "NeedsCompilation": "yes",
+      "Author": "R Core Team [aut, cph, cre] (02zz1nj61), Roger Bivand [ctb, cph], Vincent J. Carey [ctb, cph], Saikat DebRoy [ctb, cph], Stephen Eglen [ctb, cph], Rajarshi Guha [ctb, cph], Swetlana Herbrandt [ctb], Nicholas Lewin-Koh [ctb, cph], Mark Myatt [ctb, cph], Michael Nelson [ctb], Ben Pfaff [ctb], Brian Quistorff [ctb], Frank Warmerdam [ctb, cph], Stephen Weigand [ctb, cph], Free Software Foundation, Inc. [cph]",
+      "Maintainer": "R Core Team <R-core@R-project.org>",
       "Repository": "CRAN"
     },
     "fresh": {
@@ -1950,6 +2182,43 @@
       "Maintainer": "Jennifer Bryan <jenny@posit.co>",
       "Repository": "CRAN"
     },
+    "gdtools": {
+      "Package": "gdtools",
+      "Version": "0.5.1",
+      "Source": "Repository",
+      "Title": "Font Metrics and Font Management Utilities for R Graphics",
+      "Authors@R": "c( person(\"David\", \"Gohel\", , \"david.gohel@ardata.fr\", role = c(\"aut\", \"cre\")), person(\"Hadley\", \"Wickham\", , \"hadley@rstudio.com\", role = \"aut\"), person(\"Lionel\", \"Henry\", , \"lionel@rstudio.com\", role = \"aut\"), person(\"Jeroen\", \"Ooms\", , \"jeroen@berkeley.edu\", role = \"aut\", comment = c(ORCID = \"0000-0002-4035-0289\")), person(\"Yixuan\", \"Qiu\", role = \"ctb\"), person(\"R Core Team\", role = \"cph\", comment = \"Cairo code from X11 device\"), person(\"ArData\", role = \"cph\"), person(\"RStudio\", role = \"cph\") )",
+      "Description": "Compute text metrics (width, ascent, descent) using 'Cairo' and 'FreeType', independently of the active graphic device. Font lookup is delegated to 'systemfonts'. Additional utilities let users register 'Google Fonts' or bundled 'Liberation' fonts, check font availability, and assemble 'htmlDependency' objects so that fonts are correctly embedded in 'Shiny' applications, 'R Markdown' documents, and 'htmlwidgets' outputs such as 'ggiraph'.",
+      "License": "GPL-3 | file LICENSE",
+      "URL": "https://davidgohel.github.io/gdtools/",
+      "BugReports": "https://github.com/davidgohel/gdtools/issues",
+      "Depends": [
+        "R (>= 4.0.0)"
+      ],
+      "Imports": [
+        "fontquiver (>= 0.2.0)",
+        "htmltools",
+        "Rcpp (>= 0.12.12)",
+        "systemfonts (>= 1.3.1)",
+        "tools"
+      ],
+      "Suggests": [
+        "curl",
+        "gfonts",
+        "methods",
+        "testthat"
+      ],
+      "LinkingTo": [
+        "Rcpp"
+      ],
+      "Encoding": "UTF-8",
+      "SystemRequirements": "cairo, freetype2, fontconfig",
+      "Config/roxygen2/version": "8.0.0",
+      "NeedsCompilation": "yes",
+      "Author": "David Gohel [aut, cre], Hadley Wickham [aut], Lionel Henry [aut], Jeroen Ooms [aut] (ORCID: <https://orcid.org/0000-0002-4035-0289>), Yixuan Qiu [ctb], R Core Team [cph] (Cairo code from X11 device), ArData [cph], RStudio [cph]",
+      "Maintainer": "David Gohel <david.gohel@ardata.fr>",
+      "Repository": "CRAN"
+    },
     "generics": {
       "Package": "generics",
       "Version": "0.1.4",
@@ -2041,6 +2310,62 @@
       "RemoteRepo": "ggalt",
       "RemoteRef": "master",
       "RemoteSha": "c519a0325374b6e4feab0ceecfc5896b895e0db1"
+    },
+    "ggiraph": {
+      "Package": "ggiraph",
+      "Version": "0.9.6",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Make 'ggplot2' Graphics Interactive",
+      "Authors@R": "c( person(\"David\", \"Gohel\", , \"david.gohel@ardata.fr\", role = c(\"aut\", \"cre\")), person(\"Panagiotis\", \"Skintzos\", , \"sigmapi@posteo.net\", role = \"aut\"), person(\"Mike\", \"Bostock\", role = \"cph\", comment = \"d3.js\"), person(\"Speros\", \"Kokenes\", role = \"cph\", comment = \"d3-lasso\"), person(\"Eric\", \"Shull\", role = \"cph\", comment = \"saveSvgAsPng js library\"), person(\"Lee\", \"Thomason\", role = \"cph\", comment = \"TinyXML2\"), person(\"Vladimir\", \"Agafonkin\", role = \"cph\", comment = \"Flatbush\"), person(\"Eric\", \"Book\", role = \"ctb\", comment = \"hline and vline geoms\") )",
+      "Description": "Create interactive 'ggplot2' graphics using 'htmlwidgets'.",
+      "License": "GPL-3",
+      "URL": "https://davidgohel.github.io/ggiraph/",
+      "BugReports": "https://github.com/davidgohel/ggiraph/issues",
+      "Imports": [
+        "cli",
+        "dplyr",
+        "gdtools (>= 0.5.0)",
+        "ggplot2 (>= 4.0.0)",
+        "grid",
+        "htmltools",
+        "htmlwidgets (>= 1.5)",
+        "MASS",
+        "purrr",
+        "Rcpp (>= 1.1.0)",
+        "rlang",
+        "S7 (>= 0.2.0)",
+        "stats",
+        "systemfonts (>= 1.3.1)",
+        "vctrs"
+      ],
+      "Suggests": [
+        "ggbeeswarm",
+        "ggrepel (>= 0.9.1)",
+        "hexbin",
+        "knitr",
+        "maps",
+        "quantreg",
+        "rmarkdown",
+        "sf (>= 1.0)",
+        "shiny",
+        "tinytest",
+        "xml2 (>= 1.0)"
+      ],
+      "LinkingTo": [
+        "Rcpp",
+        "systemfonts"
+      ],
+      "VignetteBuilder": "knitr",
+      "Copyright": "See file COPYRIGHTS.",
+      "Encoding": "UTF-8",
+      "RoxygenNote": "7.3.3",
+      "SystemRequirements": "libpng",
+      "Collate": "'RcppExports.R' 'ipar.R' 'utils_ggplot2_performance.R' 'utils_ggplot2.R' 'utils.R' 'annotate_interactive.R' 'annotation_raster_interactive.R' 'utils_css.R' 'fonts.R' 'girafe_options.R' 'default.R' 'dsvg.R' 'dsvg_view.R' 'element_interactive.R' 'facet_interactive.R' 'geom_abline_interactive.R' 'geom_path_interactive.R' 'geom_polygon_interactive.R' 'geom_rect_interactive.R' 'geom_bar_interactive.R' 'geom_bin_2d_interactive.R' 'geom_boxplot_interactive.R' 'geom_col_interactive.R' 'geom_contour_interactive.R' 'geom_count_interactive.R' 'geom_crossbar_interactive.R' 'geom_curve_interactive.R' 'geom_density_2d_interactive.R' 'geom_density_interactive.R' 'geom_dotplot_interactive.R' 'geom_errorbar_interactive.R' 'geom_errorbarh_interactive.R' 'geom_freqpoly_interactive.R' 'geom_hex_interactive.R' 'geom_histogram_interactive.R' 'geom_hline_interactive.R' 'geom_jitter_interactive.R' 'geom_label_interactive.R' 'geom_linerange_interactive.R' 'geom_map_interactive.R' 'geom_point_interactive.R' 'geom_pointrange_interactive.R' 'geom_quantile_interactive.R' 'geom_quasirandom_interactive.R' 'geom_raster_interactive.R' 'geom_ribbon_interactive.R' 'geom_segment_interactive.R' 'geom_sf_interactive.R' 'geom_smooth_interactive.R' 'geom_spoke_interactive.R' 'geom_text_interactive.R' 'geom_text_repel_interactive.R' 'geom_tile_interactive.R' 'geom_violin_interactive.R' 'geom_vline_interactive.R' 'ggiraph.R' 'girafe.R' 'girafe_class.R' 'grob_interactive.R' 'guide_bins_interactive.R' 'guide_colourbar_interactive.R' 'guide_coloursteps_interactive.R' 'guide_interactive.R' 'guide_legend_interactive.R' 'interactive_circle_grob.R' 'interactive_curve_grob.R' 'interactive_path_grob.R' 'interactive_points_grob.R' 'interactive_polygon_grob.R' 'interactive_polyline_grob.R' 'interactive_raster_grob.R' 'interactive_rect_grob.R' 'interactive_roundrect_grob.R' 'interactive_segments_grob.R' 'interactive_text_grob.R' 'labeller_interactive.R' 'layer_interactive.R' 'scale_alpha_interactive.R' 'scale_brewer_interactive.R' 'scale_colour_interactive.R' 'scale_gradient_interactive.R' 'scale_interactive.R' 'scale_linetype_interactive.R' 'scale_manual_interactive.R' 'scale_shape_interactive.R' 'scale_size_interactive.R' 'scale_steps_interactive.R' 'scale_viridis_interactive.R' 'tracers.R' 'utils_data.r'",
+      "NeedsCompilation": "yes",
+      "Author": "David Gohel [aut, cre], Panagiotis Skintzos [aut], Mike Bostock [cph] (d3.js), Speros Kokenes [cph] (d3-lasso), Eric Shull [cph] (saveSvgAsPng js library), Lee Thomason [cph] (TinyXML2), Vladimir Agafonkin [cph] (Flatbush), Eric Book [ctb] (hline and vline geoms)",
+      "Maintainer": "David Gohel <david.gohel@ardata.fr>",
+      "Repository": "CRAN"
     },
     "ggmap": {
       "Package": "ggmap",
@@ -2159,6 +2484,59 @@
       "NeedsCompilation": "no",
       "Author": "Hadley Wickham [aut] (ORCID: <https://orcid.org/0000-0003-4757-117X>), Winston Chang [aut] (ORCID: <https://orcid.org/0000-0002-1576-2126>), Lionel Henry [aut], Thomas Lin Pedersen [aut, cre] (ORCID: <https://orcid.org/0000-0002-5147-4711>), Kohske Takahashi [aut], Claus Wilke [aut] (ORCID: <https://orcid.org/0000-0002-7470-9261>), Kara Woo [aut] (ORCID: <https://orcid.org/0000-0002-5125-4188>), Hiroaki Yutani [aut] (ORCID: <https://orcid.org/0000-0002-3385-7233>), Dewey Dunnington [aut] (ORCID: <https://orcid.org/0000-0002-9415-4582>), Teun van den Brand [aut] (ORCID: <https://orcid.org/0000-0002-9335-7468>), Posit, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
       "Maintainer": "Thomas Lin Pedersen <thomas.pedersen@posit.co>",
+      "Repository": "CRAN"
+    },
+    "ggrepel": {
+      "Package": "ggrepel",
+      "Version": "0.9.8",
+      "Source": "Repository",
+      "Authors@R": "c( person(\"Kamil\", \"Slowikowski\", email = \"kslowikowski@gmail.com\", role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0000-0002-2843-6370\")), person(\"Teun\", \"van den Brand\", role = \"ctb\", comment = c(ORCID = \"0000-0002-9335-7468\")), person(\"Alicia\", \"Schep\", role = \"ctb\", comment = c(ORCID = \"0000-0002-3915-0618\")), person(\"Sean\", \"Hughes\", role = \"ctb\", comment = c(ORCID = \"0000-0002-9409-9405\")), person(\"Trung Kien\", \"Dang\", role = \"ctb\", comment = c(ORCID = \"0000-0001-7562-6495\")), person(\"Saulius\", \"Lukauskas\", role = \"ctb\"), person(\"Jean-Olivier\", \"Irisson\", role = \"ctb\", comment = c(ORCID = \"0000-0003-4920-3880\")), person(\"Zhian N\", \"Kamvar\", role = \"ctb\", comment = c(ORCID = \"0000-0003-1458-7108\")), person(\"Thompson\", \"Ryan\", role = \"ctb\", comment = c(ORCID = \"0000-0002-0450-8181\")), person(\"Dervieux\", \"Christophe\", role = \"ctb\", comment = c(ORCID = \"0000-0003-4474-2498\")), person(\"Yutani\", \"Hiroaki\", role = \"ctb\"), person(\"Pierre\", \"Gramme\", role = \"ctb\"), person(\"Amir Masoud\", \"Abdol\", role = \"ctb\"), person(\"Malcolm\", \"Barrett\", role = \"ctb\", comment = c(ORCID = \"0000-0003-0299-5825\")), person(\"Robrecht\", \"Cannoodt\", role = \"ctb\", comment = c(ORCID = \"0000-0003-3641-729X\")), person(\"Michał\", \"Krassowski\", role = \"ctb\", comment = c(ORCID = \"0000-0002-9638-7785\")), person(\"Michael\", \"Chirico\", role = \"ctb\", comment = c(ORCID = \"0000-0003-0787-087X\")), person(\"Pedro\", \"Aphalo\", role = \"ctb\", comment = c(ORCID = \"0000-0003-3385-972X\")), person(\"Francis\", \"Barton\", role = \"ctb\") )",
+      "Title": "Automatically Position Non-Overlapping Text Labels with 'ggplot2'",
+      "Description": "Provides text and label geoms for 'ggplot2' that help to avoid overlapping text labels. Labels repel away from each other and away from the data points.",
+      "Depends": [
+        "R (>= 4.1.0)",
+        "ggplot2 (>= 3.5.2)"
+      ],
+      "Imports": [
+        "grid",
+        "Rcpp",
+        "rlang (>= 1.1.6)",
+        "S7",
+        "scales (>= 1.4.0)",
+        "withr (>= 3.0.2)"
+      ],
+      "Suggests": [
+        "knitr",
+        "rmarkdown",
+        "testthat",
+        "svglite",
+        "vdiffr",
+        "gridExtra",
+        "ggpp",
+        "patchwork",
+        "devtools",
+        "prettydoc",
+        "ggbeeswarm",
+        "dplyr",
+        "magrittr",
+        "readr",
+        "stringr",
+        "marquee",
+        "rsvg",
+        "sf"
+      ],
+      "VignetteBuilder": "knitr",
+      "License": "GPL-3 | file LICENSE",
+      "URL": "https://ggrepel.slowkow.com/, https://github.com/slowkow/ggrepel",
+      "BugReports": "https://github.com/slowkow/ggrepel/issues",
+      "RoxygenNote": "7.3.3",
+      "LinkingTo": [
+        "Rcpp"
+      ],
+      "Encoding": "UTF-8",
+      "NeedsCompilation": "yes",
+      "Author": "Kamil Slowikowski [aut, cre] (ORCID: <https://orcid.org/0000-0002-2843-6370>), Teun van den Brand [ctb] (ORCID: <https://orcid.org/0000-0002-9335-7468>), Alicia Schep [ctb] (ORCID: <https://orcid.org/0000-0002-3915-0618>), Sean Hughes [ctb] (ORCID: <https://orcid.org/0000-0002-9409-9405>), Trung Kien Dang [ctb] (ORCID: <https://orcid.org/0000-0001-7562-6495>), Saulius Lukauskas [ctb], Jean-Olivier Irisson [ctb] (ORCID: <https://orcid.org/0000-0003-4920-3880>), Zhian N Kamvar [ctb] (ORCID: <https://orcid.org/0000-0003-1458-7108>), Thompson Ryan [ctb] (ORCID: <https://orcid.org/0000-0002-0450-8181>), Dervieux Christophe [ctb] (ORCID: <https://orcid.org/0000-0003-4474-2498>), Yutani Hiroaki [ctb], Pierre Gramme [ctb], Amir Masoud Abdol [ctb], Malcolm Barrett [ctb] (ORCID: <https://orcid.org/0000-0003-0299-5825>), Robrecht Cannoodt [ctb] (ORCID: <https://orcid.org/0000-0003-3641-729X>), Michał Krassowski [ctb] (ORCID: <https://orcid.org/0000-0002-9638-7785>), Michael Chirico [ctb] (ORCID: <https://orcid.org/0000-0003-0787-087X>), Pedro Aphalo [ctb] (ORCID: <https://orcid.org/0000-0003-3385-972X>), Francis Barton [ctb]",
+      "Maintainer": "Kamil Slowikowski <kslowikowski@gmail.com>",
       "Repository": "CRAN"
     },
     "ggthemes": {
@@ -3682,6 +4060,34 @@
       "Repository": "CRAN",
       "Encoding": "UTF-8"
     },
+    "phosphoricons": {
+      "Package": "phosphoricons",
+      "Version": "0.2.1",
+      "Source": "Repository",
+      "Title": "'Phosphor' Icons for R",
+      "Authors@R": "c(person(given = \"Victor\", family = \"Perrier\", role = c(\"aut\", \"cre\", \"cph\"), email = \"victor.perrier@dreamrs.fr\"), person(given = \"Fanny\", family = \"Meyer\", role = \"aut\"), person(given = \"Phosphor Icons\", role = \"cph\", comment = \"Phosphor Icons <https://github.com/phosphor-icons>\"))",
+      "Description": "Use 'Phosphor' icons in 'shiny' applications or 'rmarkdown' documents. Icons are available in 5 different weights and can be customized by setting color, size, orientation and more.",
+      "License": "MIT + file LICENSE",
+      "Encoding": "UTF-8",
+      "RoxygenNote": "7.3.1",
+      "Depends": [
+        "R (>= 2.10)"
+      ],
+      "Imports": [
+        "htmltools (>= 0.3)"
+      ],
+      "Suggests": [
+        "covr",
+        "shiny",
+        "tinytest"
+      ],
+      "URL": "https://dreamrs.github.io/phosphoricons/, https://github.com/dreamRs/phosphoricons",
+      "BugReports": "https://github.com/dreamRs/phosphoricons/issues",
+      "NeedsCompilation": "no",
+      "Author": "Victor Perrier [aut, cre, cph], Fanny Meyer [aut], Phosphor Icons [cph] (Phosphor Icons <https://github.com/phosphor-icons>)",
+      "Maintainer": "Victor Perrier <victor.perrier@dreamrs.fr>",
+      "Repository": "CRAN"
+    },
     "pillar": {
       "Package": "pillar",
       "Version": "1.11.1",
@@ -4288,6 +4694,82 @@
       "Repository": "CRAN",
       "Encoding": "UTF-8"
     },
+    "reactR": {
+      "Package": "reactR",
+      "Version": "0.6.1",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "React Helpers",
+      "Date": "2024-09-14",
+      "Authors@R": "c( person( \"Facebook\", \"Inc\" , role = c(\"aut\", \"cph\") , comment = \"React library in lib, https://reactjs.org/; see AUTHORS for full list of contributors\" ), person( \"Michel\",\"Weststrate\", , role = c(\"aut\", \"cph\") , comment = \"mobx library in lib, https://github.com/mobxjs\" ), person( \"Kent\", \"Russell\" , role = c(\"aut\", \"cre\") , comment = \"R interface\" , email = \"kent.russell@timelyportfolio.com\" ), person( \"Alan\", \"Dipert\" , role = c(\"aut\") , comment = \"R interface\" , email = \"alan@rstudio.com\" ), person( \"Greg\", \"Lin\" , role = c(\"aut\") , comment = \"R interface\" , email = \"glin@glin.io\" ) )",
+      "Maintainer": "Kent Russell <kent.russell@timelyportfolio.com>",
+      "Description": "Make it easy to use 'React' in R with 'htmlwidget' scaffolds, helper dependency functions, an embedded 'Babel' 'transpiler', and examples.",
+      "URL": "https://github.com/react-R/reactR",
+      "BugReports": "https://github.com/react-R/reactR/issues",
+      "License": "MIT + file LICENSE",
+      "Encoding": "UTF-8",
+      "Imports": [
+        "htmltools"
+      ],
+      "Suggests": [
+        "htmlwidgets (>= 1.5.3)",
+        "rmarkdown",
+        "shiny",
+        "V8",
+        "knitr",
+        "usethis",
+        "jsonlite"
+      ],
+      "RoxygenNote": "7.3.2",
+      "VignetteBuilder": "knitr",
+      "NeedsCompilation": "no",
+      "Author": "Facebook Inc [aut, cph] (React library in lib, https://reactjs.org/; see AUTHORS for full list of contributors), Michel Weststrate [aut, cph] (mobx library in lib, https://github.com/mobxjs), Kent Russell [aut, cre] (R interface), Alan Dipert [aut] (R interface), Greg Lin [aut] (R interface)",
+      "Repository": "CRAN"
+    },
+    "reactable": {
+      "Package": "reactable",
+      "Version": "0.4.5",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Interactive Data Tables for R",
+      "Authors@R": "c( person(\"Greg\", \"Lin\", email = \"glin@glin.io\", role = c(\"aut\", \"cre\")), person(\"Tanner\", \"Linsley\", role = c(\"ctb\", \"cph\"), comment = \"React Table library\"), person(family = \"Emotion team and other contributors\", role = c(\"ctb\", \"cph\"), comment = \"Emotion library\"), person(\"Kent\", \"Russell\", role = c(\"ctb\", \"cph\"), comment = \"reactR package\"), person(\"Ramnath\", \"Vaidyanathan\", role = c(\"ctb\", \"cph\"), comment = \"htmlwidgets package\"), person(\"Joe\", \"Cheng\", role = c(\"ctb\", \"cph\"), comment = \"htmlwidgets package\"), person(\"JJ\", \"Allaire\", role = c(\"ctb\", \"cph\"), comment = \"htmlwidgets package\"), person(\"Yihui\", \"Xie\", role = c(\"ctb\", \"cph\"), comment = \"htmlwidgets package\"), person(\"Kenton\", \"Russell\", role = c(\"ctb\", \"cph\"), comment = \"htmlwidgets package\"), person(family = \"Facebook, Inc. and its affiliates\", role = c(\"ctb\", \"cph\"), comment = \"React library\"), person(family = \"FormatJS\", role = c(\"ctb\", \"cph\"), comment = \"FormatJS libraries\"), person(family = \"Feross Aboukhadijeh, and other contributors\", role = c(\"ctb\", \"cph\"), comment = \"buffer library\"), person(\"Roman\", \"Shtylman\", role = c(\"ctb\", \"cph\"), comment = \"process library\"), person(\"James\", \"Halliday\", role = c(\"ctb\", \"cph\"), comment = \"stream-browserify library\"), person(family = \"Posit Software, PBC\", role = c(\"fnd\", \"cph\")) )",
+      "Description": "Interactive data tables for R, based on the 'React Table' JavaScript library. Provides an HTML widget that can be used in 'R Markdown' or 'Quarto' documents, 'Shiny' applications, or viewed from an R console.",
+      "License": "MIT + file LICENSE",
+      "URL": "https://glin.github.io/reactable/, https://github.com/glin/reactable",
+      "BugReports": "https://github.com/glin/reactable/issues",
+      "Depends": [
+        "R (>= 3.1)"
+      ],
+      "Imports": [
+        "digest",
+        "htmltools (>= 0.5.2)",
+        "htmlwidgets (>= 1.5.3)",
+        "jsonlite",
+        "reactR"
+      ],
+      "Suggests": [
+        "covr",
+        "crosstalk",
+        "dplyr",
+        "fontawesome",
+        "knitr",
+        "leaflet",
+        "MASS",
+        "rmarkdown",
+        "shiny",
+        "sparkline",
+        "testthat",
+        "tippy",
+        "V8"
+      ],
+      "Encoding": "UTF-8",
+      "RoxygenNote": "7.2.1",
+      "Config/testthat/edition": "3",
+      "NeedsCompilation": "no",
+      "Author": "Greg Lin [aut, cre], Tanner Linsley [ctb, cph] (React Table library), Emotion team and other contributors [ctb, cph] (Emotion library), Kent Russell [ctb, cph] (reactR package), Ramnath Vaidyanathan [ctb, cph] (htmlwidgets package), Joe Cheng [ctb, cph] (htmlwidgets package), JJ Allaire [ctb, cph] (htmlwidgets package), Yihui Xie [ctb, cph] (htmlwidgets package), Kenton Russell [ctb, cph] (htmlwidgets package), Facebook, Inc. and its affiliates [ctb, cph] (React library), FormatJS [ctb, cph] (FormatJS libraries), Feross Aboukhadijeh, and other contributors [ctb, cph] (buffer library), Roman Shtylman [ctb, cph] (process library), James Halliday [ctb, cph] (stream-browserify library), Posit Software, PBC [fnd, cph]",
+      "Maintainer": "Greg Lin <glin@glin.io>",
+      "Repository": "CRAN"
+    },
     "readr": {
       "Package": "readr",
       "Version": "2.2.0",
@@ -4535,6 +5017,66 @@
       "NeedsCompilation": "no",
       "Author": "Jennifer Bryan [aut, cre] (<https://orcid.org/0000-0002-6983-2759>), Jim Hester [aut] (<https://orcid.org/0000-0002-2739-7082>), David Robinson [aut], Hadley Wickham [aut] (<https://orcid.org/0000-0003-4757-117X>), Christophe Dervieux [aut] (<https://orcid.org/0000-0003-4474-2498>), Posit Software, PBC [cph, fnd]",
       "Maintainer": "Jennifer Bryan <jenny@posit.co>",
+      "Repository": "CRAN"
+    },
+    "rio": {
+      "Package": "rio",
+      "Version": "1.3.0",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "A Swiss-Army Knife for Data I/O",
+      "Authors@R": "c(person(\"Jason\", \"Becker\", role = \"aut\", email = \"jason@jbecker.co\"), person(\"Chung-hong\", \"Chan\", role = c(\"aut\", \"cre\"), email = \"chainsawtiney@gmail.com\", comment = c(ORCID = \"0000-0002-6232-7530\")), person(\"David\", \"Schoch\", email = \"david@schochastics.net\", role = c(\"aut\"), comment = c(ORCID = \"0000-0003-2952-4812\")), person(\"Geoffrey CH\", \"Chan\", role = \"ctb\", email = \"gefchchan@gmail.com\"), person(\"Thomas J.\", \"Leeper\", role = \"aut\",  email = \"thosjleeper@gmail.com\", comment = c(ORCID = \"0000-0003-4097-6326\")), person(\"Christopher\", \"Gandrud\", role = \"ctb\"), person(\"Andrew\", \"MacDonald\", role = \"ctb\"), person(\"Ista\", \"Zahn\", role = \"ctb\"), person(\"Stanislaus\", \"Stadlmann\", role = \"ctb\"), person(\"Ruaridh\", \"Williamson\", role = \"ctb\", email = \"ruaridh.williamson@gmail.com\"), person(\"Patrick\", \"Kennedy\", role = \"ctb\"), person(\"Ryan\", \"Price\", email = \"ryapric@gmail.com\", role = \"ctb\"), person(\"Trevor L\", \"Davis\", email = \"trevor.l.davis@gmail.com\", role = \"ctb\"), person(\"Nathan\", \"Day\", email = \"nathancday@gmail.com\", role = \"ctb\"), person(\"Bill\", \"Denney\", email=\"wdenney@humanpredictions.com\", role=\"ctb\", comment=c(ORCID=\"0000-0002-5759-428X\")), person(\"Alex\", \"Bokov\", email = \"alex.bokov@gmail.com\", role = \"ctb\", comment=c(ORCID=\"0000-0002-0511-9815\")), person(\"Hugo\", \"Gruson\", role = \"ctb\", comment = c(ORCID = \"0000-0002-4094-1476\")), person(\"Jacob\", \"Mears\", role = \"ctb\"))",
+      "Description": "Streamlined data import and export by making assumptions that the user is probably willing to make: 'import()' and 'export()' determine the data format from the file extension, reasonable defaults are used for data import and export, web-based import is natively supported (including from SSL/HTTPS), compressed files can be read directly, and fast import packages are used where appropriate. An additional convenience function, 'convert()', provides a simple method for converting between file types.",
+      "URL": "https://gesistsa.github.io/rio/, https://github.com/gesistsa/rio",
+      "BugReports": "https://github.com/gesistsa/rio/issues",
+      "Depends": [
+        "R (>= 4.0)"
+      ],
+      "Imports": [
+        "tools",
+        "stats",
+        "utils",
+        "foreign",
+        "haven (>= 1.1.2)",
+        "curl (>= 0.6)",
+        "data.table (>= 1.11.2)",
+        "readxl (>= 0.1.1)",
+        "tibble",
+        "writexl",
+        "lifecycle",
+        "R.utils (>= 2.13.0)",
+        "readr"
+      ],
+      "Suggests": [
+        "datasets",
+        "bit64",
+        "testthat",
+        "knitr",
+        "magrittr",
+        "clipr",
+        "fst",
+        "hexView",
+        "jsonlite",
+        "pzfx",
+        "readODS (>= 2.1.0)",
+        "rmarkdown",
+        "rmatio",
+        "xml2 (>= 1.2.0)",
+        "yaml",
+        "arrow (>= 0.17.0)",
+        "stringi",
+        "withr",
+        "nanoparquet",
+        "qs2 (>= 0.1.5)"
+      ],
+      "License": "GPL-2",
+      "VignetteBuilder": "knitr",
+      "Encoding": "UTF-8",
+      "RoxygenNote": "7.3.2",
+      "Config/Needs/website": "gesistsa/tsatemplate",
+      "NeedsCompilation": "no",
+      "Author": "Jason Becker [aut], Chung-hong Chan [aut, cre] (ORCID: <https://orcid.org/0000-0002-6232-7530>), David Schoch [aut] (ORCID: <https://orcid.org/0000-0003-2952-4812>), Geoffrey CH Chan [ctb], Thomas J. Leeper [aut] (ORCID: <https://orcid.org/0000-0003-4097-6326>), Christopher Gandrud [ctb], Andrew MacDonald [ctb], Ista Zahn [ctb], Stanislaus Stadlmann [ctb], Ruaridh Williamson [ctb], Patrick Kennedy [ctb], Ryan Price [ctb], Trevor L Davis [ctb], Nathan Day [ctb], Bill Denney [ctb] (ORCID: <https://orcid.org/0000-0002-5759-428X>), Alex Bokov [ctb] (ORCID: <https://orcid.org/0000-0002-0511-9815>), Hugo Gruson [ctb] (ORCID: <https://orcid.org/0000-0002-4094-1476>), Jacob Mears [ctb]",
+      "Maintainer": "Chung-hong Chan <chainsawtiney@gmail.com>",
       "Repository": "CRAN"
     },
     "rlang": {
@@ -5057,6 +5599,36 @@
       ],
       "NeedsCompilation": "no",
       "Author": "Victor Perrier [aut, cre, cph], Fanny Meyer [aut], David Granjon [aut], Ian Fellows [ctb] (Methods for mutating vertical tabs & updateMultiInput), Wil Davis [ctb] (numericRangeInput function), Spencer Matthews [ctb] (autoNumeric methods), JavaScript and CSS libraries authors [ctb, cph] (All authors are listed in LICENSE.md)",
+      "Maintainer": "Victor Perrier <victor.perrier@dreamrs.fr>",
+      "Repository": "CRAN"
+    },
+    "shinybusy": {
+      "Package": "shinybusy",
+      "Version": "0.3.3",
+      "Source": "Repository",
+      "Title": "Busy Indicators and Notifications for 'Shiny' Applications",
+      "Authors@R": "c(person(\"Fanny\", \"Meyer\", role = \"aut\"), person(\"Victor\", \"Perrier\", email = \"victor.perrier@dreamrs.fr\", role = c(\"aut\", \"cre\")), person(\"Silex Technologies\", comment = \"https://www.silex-ip.com\", role = \"fnd\"))",
+      "Description": "Add indicators (spinner, progress bar, gif) in your 'shiny' applications to show the user that the server is busy. And other tools to let your users know something is happening (send notifications, reports, ...).",
+      "License": "GPL-3",
+      "Encoding": "UTF-8",
+      "Imports": [
+        "htmltools",
+        "shiny",
+        "jsonlite",
+        "htmlwidgets"
+      ],
+      "RoxygenNote": "7.3.1",
+      "URL": "https://github.com/dreamRs/shinybusy, https://dreamrs.github.io/shinybusy/",
+      "BugReports": "https://github.com/dreamRs/shinybusy/issues",
+      "Suggests": [
+        "testthat",
+        "covr",
+        "knitr",
+        "rmarkdown"
+      ],
+      "VignetteBuilder": "knitr",
+      "NeedsCompilation": "no",
+      "Author": "Fanny Meyer [aut], Victor Perrier [aut, cre], Silex Technologies [fnd] (https://www.silex-ip.com)",
       "Maintainer": "Victor Perrier <victor.perrier@dreamrs.fr>",
       "Repository": "CRAN"
     },
@@ -5772,6 +6344,46 @@
       "Maintainer": "Yihui Xie <xie@yihui.name>",
       "Repository": "CRAN"
     },
+    "toastui": {
+      "Package": "toastui",
+      "Version": "0.4.0",
+      "Source": "Repository",
+      "Title": "Interactive Tables, Calendars and Charts for the Web",
+      "Authors@R": "c( person(\"Victor\", \"Perrier\", email = \"victor.perrier@dreamrs.fr\", role = c(\"aut\", \"cre\", \"cph\")), person(\"Fanny\", \"Meyer\", role = \"aut\"), person(\"NHN FE Development Lab\", role = \"cph\", comment = \"tui-grid, tui-calendar, tui-chart libraries\"))",
+      "Description": "Create interactive tables, calendars, charts and markdown WYSIWYG editor with 'TOAST UI' <https://ui.toast.com/> libraries to integrate in 'shiny' applications or 'rmarkdown' 'HTML' documents.",
+      "License": "MIT + file LICENSE",
+      "Encoding": "UTF-8",
+      "LazyData": "true",
+      "Depends": [
+        "R (>= 2.10)"
+      ],
+      "Imports": [
+        "utils",
+        "htmlwidgets",
+        "htmltools",
+        "magrittr",
+        "phosphoricons",
+        "rlang",
+        "shiny (>= 1.1.0)",
+        "shinyWidgets"
+      ],
+      "Suggests": [
+        "apexcharter",
+        "bslib",
+        "knitr",
+        "rmarkdown",
+        "scales",
+        "tinytest"
+      ],
+      "VignetteBuilder": "knitr",
+      "RoxygenNote": "7.3.2",
+      "URL": "https://dreamrs.github.io/toastui/",
+      "BugReports": "https://github.com/dreamRs/toastui/issues",
+      "NeedsCompilation": "no",
+      "Author": "Victor Perrier [aut, cre, cph], Fanny Meyer [aut], NHN FE Development Lab [cph] (tui-grid, tui-calendar, tui-chart libraries)",
+      "Maintainer": "Victor Perrier <victor.perrier@dreamrs.fr>",
+      "Repository": "CRAN"
+    },
     "tzdb": {
       "Package": "tzdb",
       "Version": "0.5.0",
@@ -6279,6 +6891,41 @@
       "LazyData": "true",
       "NeedsCompilation": "yes",
       "Author": "Dewey Dunnington [aut, cre] (ORCID: <https://orcid.org/0000-0002-9415-4582>), Edzer Pebesma [aut] (ORCID: <https://orcid.org/0000-0001-8049-7069>), Anthony North [ctb]",
+      "Repository": "CRAN"
+    },
+    "writexl": {
+      "Package": "writexl",
+      "Version": "2.0.0",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Export Data Frames to Excel 'xlsx' Format",
+      "Authors@R": "c( person(\"Jeroen\", \"Ooms\", role = \"aut\", comment = c(ORCID = \"0000-0002-4035-0289\")), person(\"Bill\", \"Denney\", ,\"wdenney@humanpredictions.com\", role = c(\"aut\", \"cre\"), comment = c(ORCID=\"0000-0002-5759-428X\")), person(\"John McNamara\", role = \"cph\", comment = \"Author of libxlsxwriter (see AUTHORS and COPYRIGHT files for details)\"))",
+      "Description": "Zero-dependency data frame to xlsx exporter based on 'libxlsxwriter' <https://libxlsxwriter.github.io>. Fast and no Java or Excel required.",
+      "License": "BSD_2_clause + file LICENSE",
+      "Copyright": "Jeroen Ooms. For copyright notices of bundled third-party code (libxlsxwriter and dependencies), see COPYRIGHT.",
+      "Encoding": "UTF-8",
+      "URL": "https://ropensci.r-universe.dev/writexl https://docs.ropensci.org/writexl/",
+      "BugReports": "https://github.com/ropensci/writexl/issues",
+      "Suggests": [
+        "grDevices",
+        "graphics",
+        "spelling",
+        "readxl",
+        "nycflights13",
+        "testthat (>= 3.2.0)",
+        "xml2",
+        "bit64",
+        "knitr",
+        "rmarkdown"
+      ],
+      "VignetteBuilder": "knitr",
+      "Language": "en-US",
+      "SystemRequirements": "zlib",
+      "Config/testthat/edition": "3",
+      "Config/roxygen2/version": "8.0.0",
+      "NeedsCompilation": "yes",
+      "Author": "Jeroen Ooms [aut] (ORCID: <https://orcid.org/0000-0002-4035-0289>), Bill Denney [aut, cre] (ORCID: <https://orcid.org/0000-0002-5759-428X>), John McNamara [cph] (Author of libxlsxwriter (see AUTHORS and COPYRIGHT files for details))",
+      "Maintainer": "Bill Denney <wdenney@humanpredictions.com>",
       "Repository": "CRAN"
     },
     "xfun": {
