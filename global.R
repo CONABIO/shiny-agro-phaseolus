@@ -201,8 +201,10 @@ Mex3 <- Mex2 %>%
   dplyr::mutate(Estado = revalue(Estado,c("NEW MEXICO" = "New Mexico"))) %>%
   dplyr::filter(Habitat.1 != "ND") %>%
   dplyr::filter(Habitat.1 != "Híbrido") %>%
-  # Huehuetenango (Guatemala) se excluye de todo el análisis, incluido el mapa
-  dplyr::filter(Estado != "Huehuetenango") %>%
+  # Las localidades fuera de México se excluyen de TODO el análisis, incluido el mapa
+  # y los selectores de estado: Huehuetenango (Guatemala) y las de Estados Unidos.
+  # Son 18 registros de 5,720 (Arizona 11, New Mexico 4, Texas 3).
+  dplyr::filter(!Estado %in% c("Huehuetenango", "Arizona", "New Mexico", "Texas")) %>%
   mutate(Altitud = replace(Altitud, Altitud == 9999, NA))
 
 Mex3$AnioColecta <- as.factor(Mex3$AnioColecta)
@@ -212,6 +214,9 @@ Mex3$Especie <- as.factor(Mex3$Especie)
 Mex3$RatingCol <- as.factor(Mex3$RatingCol)
 
 
+# Antes existía un Mex4 que era Mex3 sin las localidades de EUA. Ahora esas ya salen
+# desde Mex3, así que Mex4 era una copia idéntica y se eliminó: Mex3 es la única
+# fuente de datos filtrados de la app.
 
 
 # Se excluyen también las localidades de EUA (Huehuetenango ya salió en Mex3)

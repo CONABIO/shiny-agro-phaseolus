@@ -214,8 +214,8 @@ dashboardPage(
             pickerInput(
               inputId = 'Estado_alt',
               label = h6(strong('Estado:')),
-              choices = levels(Mex4$Estado),
-              selected = levels(Mex4$Estado),
+              choices = levels(Mex3$Estado),
+              selected = levels(Mex3$Estado),
               multiple = TRUE,
               options = pickerOptions(
                 actionsBox = TRUE,

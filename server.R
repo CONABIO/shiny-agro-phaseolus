@@ -212,7 +212,7 @@ output$graph4 <- renderGirafe({
     # de todos los registros individuales (queda ponderado por número de colectas).
     Mex10 <- reactive({
       req(input$Estado_alt)
-      d <- Mex4[Mex4$Estado %in% input$Estado_alt, ]
+      d <- Mex3[Mex3$Estado %in% input$Estado_alt, ]
       L <- suppressWarnings(
         d %>%
           dplyr::select(Especie, Altitud) %>%
