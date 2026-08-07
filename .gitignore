@@ -6,3 +6,14 @@
 .DS_Store
 renv
 Rplots.pdf
+
+# Guia de trabajo personal, no forma parte del proyecto
+skill_distribucion_correccion.md
+
+# Catalogo de localidades de INEGI (AGEEML, ~53 MB, 296,658 filas). Se uso una
+# sola vez para verificar la altitud de las 32 capitales, que quedaron escritas
+# en global.R (capitales_altitud, con su CVEGEO). La app NO lo necesita para
+# correr; se conserva localmente por si hay que volver a consultarlo.
+data/AGEEML_*.csv
+data/AGEEML_*.xlsx
+data/AGEEML_*.txt
