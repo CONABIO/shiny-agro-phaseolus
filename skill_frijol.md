@@ -1132,25 +1132,120 @@ pero quedaron **sin uso** al pasar el cálculo al reactivo `Mex10()` (que ahora 
 los estados elegidos). Se eliminaron. Bonus: eran los que producían el warning de
 arranque `ningún argumento finito para min; retornando Inf` — ya no aparece.
 
-### Huehuetenango fuera de los datos
+### Solo estados de México: un único filtro en `Mex3`
 
-Pedido del usuario. Se agregó al mismo encadenamiento de filtros que ya excluía las
-localidades fuera de México en `global.R`:
+Durante un tiempo la app tuvo **dos data frames**: `Mex3` (todo) y `Mex4` (solo México).
+Las gráficas usaban `Mex4`, pero el **mapa de Distribución y el selector del waffle
+usaban `Mex3`**, así que ahí seguía apareciendo *Arizona* en la lista de estados. Lo
+detectó el usuario al filtrar en Distribución.
+
+**Solución:** el filtro se subió a `Mex3`, que ahora es la única fuente de datos de la
+app. `Mex4` quedó siendo una copia idéntica y **se eliminó**; sus 4 usos en `server.R` y
+`ui.R` apuntan ahora a `Mex3`.
+
 ```r
-Mex4 <- Mex3 %>%
-  filter(Estado != "Arizona") %>%
-  filter(Estado != "Texas") %>%
-  filter(Estado != "New Mexico") %>%
-  filter(Estado != "Huehuetenango")   # Guatemala
+# dentro de la cadena que construye Mex3
+dplyr::filter(!Estado %in% c("Huehuetenango", "Arizona", "New Mexico", "Texas")) %>%
 ```
-Esto lo saca de la gráfica de Altitud y de la de proporción por estado (ambas usan
-`Mex4`): quedan 32 estados en vez de 33.
 
-**Pendiente de decidir:** el **mapa de Distribución usa `Mex3`**, que sigue incluyendo
-Arizona, Texas, New Mexico y Huehuetenango. Es el comportamiento que ya tenía la app
-(el mapa muestra la distribución completa del género, también fuera de México). Si se
-quiere sacar Huehuetenango también del mapa, hay que filtrarlo en `Mex3` — pero entonces
-convendría decidir qué hacer con los tres estados de EUA para no quedar inconsistente.
+Son 18 registros de 5,720 (Arizona 11, New Mexico 4, Texas 3; Huehuetenango ya salía
+antes). Quedan **5,702 registros y 32 estados**.
+
+**La lección:** mantener dos data frames que difieren en un filtro es una fuente
+silenciosa de inconsistencias — nadie recuerda cuál usa cada pestaña, y la que usa el
+"equivocado" no da error, solo muestra de más. Si el criterio aplica a toda la app,
+va en un solo lugar.
+
+**Detalle de factores:** el filtro va **dentro de la cadena**, antes de
+`Mex3$Estado <- as.factor(...)`. Si se filtrara después, el nivel del estado excluido
+seguiría existiendo aunque no tuviera filas, y los selectores que leen
+`levels(Mex3$Estado)` lo mostrarían igual. Verificado: 32 niveles = 32 valores presentes,
+sin niveles fantasma.
+
+## Selector de paletas en el mapa de Distribución
+
+Tres opciones de color en la esquina inferior izquierda del mapa: **Paleta 1** (la
+original) y dos nuevas hechas con wesanderson.
+
+**El criterio de diseño:** con 60 especies y sin leyenda, el color **no puede** servir
+para identificar especies — la vista humana distingue con confianza entre 8 y 12
+colores. Su función es transmitir la **diversidad** de un vistazo; el detalle se consulta
+con los filtros y el popup de cada punto. Por eso se conservaron muchos colores en vez de
+reducir a 3 categorías.
+
+**Cómo se armaron las paletas 2 y 3.** Cada una encadena 10 paletas de wesanderson y
+pasa por tres filtros, en este orden:
+
+1. **Quitar los colores casi idénticos** (distancia perceptual < 10 en espacio Lab).
+2. **Quitar los casi blancos y casi negros** (L fuera de 18–82). Wesanderson tiene varios
+   cremas y beige clarísimos que **sobre el mapa CartoDB.Positron, que es casi blanco,
+   simplemente no se verían**. Este filtro no es obvio hasta que lo ves fallar.
+3. **Reordenar por lejanía**: cada color es el más alejado posible del anterior. Como las
+   paletas tienen menos de 60 colores y se reciclan, esto hace que los vecinos contrasten.
+
+Resultado: 30 y 27 colores, distancia mínima 10.3 y 10.0, y **cero colores compartidos**
+entre ambas. Para comparar, `rainbow_hcl(60)` tiene distancia mínima 6.
+
+**Se reciclan, no se interpolan.** `rep_len()` repite la paleta hasta cubrir las 60
+especies. Interpolar (`colorRampPalette`) generaría tonos intermedios casi idénticos y
+destruiría justo el contraste que se buscó.
+
+**El vector de colores va NOMBRADO por especie:**
+
+```r
+colores_mapa <- function(nombre) {
+  setNames(rep_len(paletas_mapa[[nombre]], nlevels(Mex3$Especie)), levels(Mex3$Especie))
+}
+```
+
+Eso es lo que hace que **cada especie conserve su color al filtrar**. Si se asignara por
+posición dentro del subconjunto visible, filtrar cambiaría los colores de todo.
+
+Se eliminó la columna `RatingCol`, que precalculaba un color fijo por especie en
+`global.R`; ahora el color se resuelve al dibujar, según la paleta elegida.
+
+### Tres tropiezos, todos sin mensaje de error
+
+**1. `renderLeaflet` + `leafletProxy` con la pestaña oculta.** Separar el mapa base
+(`renderLeaflet`) de los círculos (`observe` + `leafletProxy`) evita que se reinicie el
+zoom, pero **el mapa arrancaba vacío**: la app abre en Introducción, así que el mapa aún
+no existía cuando el observador mandó los círculos, y el mensaje se perdió. Los círculos
+solo aparecían al tocar un filtro.
+
+`outputOptions(output, "mymap1", suspendWhenHidden = FALSE)` corrige eso pero **provoca
+otro problema**: Leaflet se inicializa con tamaño 0×0 y el mapa queda gris, sin tiles.
+
+**Solución final:** volver a un solo `renderLeaflet` y conservar la vista leyendo el zoom
+y el centro actuales:
+
+```r
+zoom_actual   <- isolate(input$mymap1_zoom)
+centro_actual <- isolate(input$mymap1_center)
+# ... y al final:
+if (!is.null(zoom_actual)) mapa <- mapa %>% setView(centro_actual$lng, centro_actual$lat, zoom_actual)
+```
+
+**`isolate()` es imprescindible**: sin él, leer esos inputs —que el propio mapa actualiza
+al moverse— crea un ciclo infinito de redibujado.
+
+**2. `absolutePanel` con `left` se esconde detrás de la barra lateral.** Se posiciona
+respecto al ancestro posicionado más cercano, que era `#wrapper` (la página completa),
+así que `left = 25` caía dentro de la barra lateral de 200px. Poner `position: relative`
+en el `tabItem` no funcionó. **Lo que sí funciona** es meter el panel y el mapa juntos en
+un `div(style = "position: relative;")`. Así el `left` se mide desde el borde del mapa, y
+sigue funcionando si la barra lateral se colapsa.
+
+Con `right` no pasaba (por eso el panel de filtros nunca dio problema): el borde derecho
+de la página y el del área de contenido coinciden.
+
+**3. El navegador cachea `www/styles.css`.** Al agregar reglas nuevas, la app las sirve
+bien pero el navegador sigue usando la versión vieja: el panel salía sin fondo. Se
+verifica con `getComputedStyle(...).backgroundColor` y se resuelve recargando sin caché.
+Vale la pena descartarlo antes de suponer que la regla CSS está mal escrita.
+
+**Nota de rendimiento:** dibujar los 5,693 círculos toma varios segundos. Al probar en el
+navegador hay que esperar a que `document.querySelectorAll('#mymap1 path').length > 0`
+antes de concluir que algo falló — más de una vez pareció roto y solo estaba dibujando.
 
 ## Tipografía: qué alcanza el CSS y qué no
 
