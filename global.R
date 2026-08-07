@@ -98,9 +98,29 @@ capitales_opciones <- setNames(
 # en la imagen Docker del servidor. Por eso las gráficas se dejan con la tipografía
 # por defecto de ggplot, que renderiza de forma confiable en cualquier entorno.
 
-Mex <- read_xlsx("data/PhaseolusEne2026_JE014_Unida.xlsx", 
-                 sheet = "@PhaseolusEne2026", col_names = T)
+# En el Excel, parte de la columna Altitud está guardada con formato TEXTO en vez de
+# número (de la fila ~4537 en adelante). Eso hacía que readxl soltara más de mil avisos
+# "Coercing text to numeric" al arrancar la app. Los datos quedaban bien (verificado:
+# 0 valores no numéricos), pero el ruido tapaba cualquier aviso que sí importara.
+#
+# Ojo: pedir col_types = "numeric" NO los silencia, readxl avisa igual. La forma limpia
+# es leer esa columna como TEXTO y convertirla aquí con as.numeric(). Si algún día
+# alguien captura un valor no numérico, saldrá un único aviso claro
+# ("NAs introduced by coercion") en vez de perderse entre miles.
+ARCHIVO_PHASEOLUS <- "data/PhaseolusEne2026_JE014_Unida.xlsx"
+HOJA_PHASEOLUS    <- "@PhaseolusEne2026"
+
+tipos_phaseolus <- {
+  encabezados <- names(read_xlsx(ARCHIVO_PHASEOLUS, sheet = HOJA_PHASEOLUS, n_max = 0))
+  t <- rep("guess", length(encabezados))       # el resto se sigue adivinando
+  t[encabezados == "Altitud"] <- "text"
+  t
+}
+
+Mex <- read_xlsx(ARCHIVO_PHASEOLUS, sheet = HOJA_PHASEOLUS,
+                 col_names = TRUE, col_types = tipos_phaseolus)
 Mex <- as.data.frame(Mex)
+Mex$Altitud <- as.numeric(Mex$Altitud)
 
 Mex2 <- Mex %>% 
   rename("Longitud" = "Long_dec",
