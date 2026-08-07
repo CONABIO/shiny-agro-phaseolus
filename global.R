@@ -57,28 +57,54 @@ nombres_combos <- names(combos_waffle)
 # Sirven como línea de referencia en la gráfica de Altitud: la gente ubica su
 # ciudad y ve de inmediato qué frijoles crecen a esa altura.
 #
-# ⚠️ REVISAR: estos valores son APROXIMADOS y están puestos como punto de
-# partida. Antes de publicar conviene verificarlos contra una fuente
-# autoritativa (INEGI). Es la única tabla que hay que tocar para corregirlos.
+# FUENTE: INEGI, Catálogo Único de Claves de Áreas Geoestadísticas
+# (archivo AGEEML, julio 2026), columna ALTITUD de la cabecera municipal
+# (CVE_LOC = 0001) de cada capital. La columna `cvegeo` guarda la clave exacta
+# de la localidad, así que cada número es rastreable hasta su renglón de origen.
+#
+# Dos precisiones:
+#  - La Ciudad de México no existe como localidad única en el catálogo (está
+#    partida en 16 alcaldías). Se usa Cuauhtémoc, que es donde está el Zócalo.
+#  - `ciudad` y `estado` usan los nombres comunes que emplea la app, no los
+#    oficiales de INEGI ("Coahuila", no "Coahuila de Zaragoza"), para que
+#    `estado` se pueda unir con la columna Estado de los datos de Phaseolus.
 # ---------------------------------------------------------------------------
 capitales_altitud <- data.frame(
   ciudad = c(
-    "Aguascalientes", "Mexicali", "La Paz", "Campeche", "Tuxtla Gutiérrez",
-    "Chihuahua", "Ciudad de México", "Saltillo", "Colima", "Durango",
-    "Guanajuato", "Chilpancingo", "Pachuca", "Guadalajara", "Toluca",
-    "Morelia", "Cuernavaca", "Tepic", "Monterrey", "Oaxaca de Juárez",
-    "Puebla", "Querétaro", "Chetumal", "San Luis Potosí", "Culiacán",
-    "Hermosillo", "Villahermosa", "Ciudad Victoria", "Tlaxcala", "Xalapa",
-    "Mérida", "Zacatecas"
+    "Aguascalientes", "Mexicali",    "La Paz",       "Campeche",
+    "Saltillo",       "Colima",      "Tuxtla Gutiérrez", "Chihuahua",
+    "Ciudad de México", "Durango",   "Guanajuato",   "Chilpancingo",
+    "Pachuca",        "Guadalajara", "Toluca",       "Morelia",
+    "Cuernavaca",     "Tepic",       "Monterrey",    "Oaxaca de Juárez",
+    "Puebla",         "Querétaro",   "Chetumal",     "San Luis Potosí",
+    "Culiacán",       "Hermosillo",  "Villahermosa", "Ciudad Victoria",
+    "Tlaxcala",       "Xalapa",      "Mérida",       "Zacatecas"
+  ),
+  estado = c(
+    "Aguascalientes", "Baja California", "Baja California Sur", "Campeche",
+    "Coahuila",       "Colima",      "Chiapas",      "Chihuahua",
+    "Ciudad de México", "Durango",   "Guanajuato",   "Guerrero",
+    "Hidalgo",        "Jalisco",     "México",       "Michoacán",
+    "Morelos",        "Nayarit",     "Nuevo León",   "Oaxaca",
+    "Puebla",         "Querétaro",   "Quintana Roo", "San Luis Potosí",
+    "Sinaloa",        "Sonora",      "Tabasco",      "Tamaulipas",
+    "Tlaxcala",       "Veracruz",    "Yucatán",      "Zacatecas"
+  ),
+  cvegeo = c(
+    "010010001", "020020001", "030030001", "040020001",
+    "050300001", "060020001", "071010001", "080190001",
+    "090150001", "100050001", "110150001", "120290001",
+    "130480001", "140390001", "151060001", "160530001",
+    "170070001", "180170001", "190390001", "200670001",
+    "211140001", "220140001", "230040001", "240280001",
+    "250060001", "260300001", "270040001", "280410001",
+    "290330001", "300870001", "310500001", "320560001"
   ),
   altitud = c(
-    1880,   3,   27,   10,  522,
-    1415, 2350, 1600,  494, 1890,
-    2000, 1360, 2400, 1566, 2660,
-    1920, 1510,  915,  540, 1555,
-    2135, 1820,   10, 1860,   54,
-     210,   10,  321, 2240, 1427,
-      10, 2440
+    1878,    0,   31,    6, 1600,  484,  522, 1421,
+    2230, 1893, 2019, 1255, 2379, 1537, 2671, 1904,
+    1523,  926,  536, 1542, 2141, 1831,    2, 1865,
+      57,  200,   11,  322, 2228, 1393,   10, 2427
   ),
   stringsAsFactors = FALSE
 )
