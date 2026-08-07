@@ -391,6 +391,9 @@ pisarnos el trabajo.
 - [x] Dar más espacio entre renglones en las gráficas de Altitud y Floración
 - [x] Mostrar la gráfica completa siempre (sin recorte ni scroll interno)
 - [x] Insertar imagen `cartel_frijoles.png` centrada en la introducción
+      (el `<div>` que la envuelve lleva `margin: 2rem 0 2.75rem` — sin eso el párrafo
+      siguiente queda pegado a la imagen, porque el margen del `<p>` no se aplica
+      contra un `<div>` hermano)
 - [x] Reemplazar el texto "Frijol" del cintillo superior por el logo de CONABIO
 - [x] Centrar la frase "Cada pueblo de México tiene su frijol" en el cintillo
       superior. Historial de intentos:
@@ -647,14 +650,45 @@ sean — el amontonamiento se resuelve por construcción, no por filtrar.
   *(Primero se probó que la cresta siguiera el `maximo` fijo: con el orden por "mínimo"
   la montaña salía dentada porque cresta y orden usaban variables distintas.)*
 
-  **Se quitó el suavizado con `loess`.** Se usaba `loess(ordenar ~ pos, span = 0.9)`,
-  pero `loess` dibuja la *tendencia*, no los datos: pasa cerca de los puntos pero no
-  por ellos, y eso dejaba **los puntos flotando sobre la ladera** — medido: 44 m de
-  desviación promedio y hasta 168 m en el peor caso. Con la cresta exacta la desviación
-  es 0 y cada punto queda posado en la superficie. No se ve dentada porque los valores
-  consecutivos de especies ordenadas están muy cerca; queda una rugosidad sutil que
-  hasta parece terreno real. Bonus: se eliminó la rama condicional que hacía falta
-  cuando había menos de 5 especies (`loess` no es confiable con tan pocos puntos).
+  **Se quitó el suavizado con `loess` de la ladera principal.** Se usaba
+  `loess(ordenar ~ pos, span = 0.9)`, pero `loess` dibuja la *tendencia*, no los datos:
+  pasa cerca de los puntos pero no por ellos, y eso dejaba **los puntos flotando sobre
+  la ladera** — medido: 44 m de desviación promedio y hasta 168 m en el peor caso. Con
+  la cresta exacta la desviación es 0. No se ve dentada porque los valores consecutivos
+  de especies ordenadas están muy cerca; queda una rugosidad sutil que hasta parece
+  terreno real.
+
+### Montaña en tres capas (mínimo, promedio, máximo)
+
+Idea del usuario: ver las tres laderas a la vez para que se aprecie toda la franja
+altitudinal que ocupa el género. Se dibujan **tres polígonos anidados**, del más claro
+(máximo, `#F7EFE0`) al más oscuro (mínimo, `#CBB185`).
+
+**El primer intento con los tres valores exactos no sirvió:** salía una sierra de picos
+caóticos. La razón es que las especies se ordenan por UNA variable, así que solo esa
+ladera sube limpia; las otras dos saltan bruscamente entre especies vecinas (una especie
+con promedio alto puede tener un mínimo muy bajo).
+
+**Solución:** la ladera de la variable **elegida en el selector** va exacta —para que los
+puntos sigan posados en ella— y **las otras dos se suavizan** con `loess(span = 0.5)`,
+funcionando como envolventes de contexto.
+
+⚠️ **Trampa encontrada al verificar:** al suavizar por separado, las curvas pueden
+cruzarse, así que hay que forzar `mínimo <= promedio <= máximo`. Pero el ajuste debe
+tocar **siempre las suavizadas y nunca la exacta**. La primera versión usaba
+`pmax(cresta_max, cresta_prom)` a secas, y al ordenar por "máximo" eso *subía* la cresta
+exacta para esquivar el promedio suavizado → **los puntos quedaban hasta 213 m fuera de
+su ladera**. Se corrigió con lógica por caso (ver `if (input$var11 == ...)` en
+`server.R`). Verificado: en las tres opciones de orden el anidamiento se respeta y la
+desviación punto-ladera es **0.0 m**.
+
+El subtítulo explica las bandas, porque tres tonos sin leyenda son ambiguos: alguien
+podría creer que la banda oscura "es la montaña" en vez de representar los mínimos.
+
+**Nota de honestidad del dato:** las dos laderas suavizadas ya no representan valores
+exactos sino tendencias. Es aceptable porque son fondo de contexto —los datos precisos
+siguen estando en los puntos y sus tooltips— pero es justo lo contrario del criterio que
+se aplicó a la ladera principal. Vale tenerlo presente si alguien pregunta.
 - **Un punto por especie** a la altitud seleccionada (`ordenar`), no un rango.
 - **Nombre rotado 90°, 1000 m arriba de su punto** (`separacion <- 1000`). Al estar cada
   nombre pegado a su propio punto, suben en escalera siguiendo la ladera — como en la
@@ -722,10 +756,36 @@ continua, casi no se veía).
 
 Altura de la gráfica: `max(650, n * 15 + 130)`, ~15 px por especie.
 
-**Nota:** se llegó a implementar un algoritmo de descolisión (empujar hacia arriba solo
-los nombres que chocaban, y solo lo mínimo) pero se quitó a petición del usuario, que
-prefirió ver primero la versión sin ajustes. Con el alternado izquierda/derecha ya no
-hizo falta.
+**Nota:** se llegó a implementar a mano un algoritmo de descolisión (empujar hacia arriba
+solo los nombres que chocaban, y solo lo mínimo) pero se quitó. Al final lo resolvió
+`ggrepel`, ver abajo.
+
+### Solución final al encimamiento: ggrepel
+
+Aun con el alternado izquierda/derecha quedaban nombres encimados. Lo resolvió
+**`ggrepel`** (0.9.8), que no es jitter (ruido al azar) sino que *empuja* activamente las
+etiquetas hasta que dejan de tocarse.
+
+**Clave: `ggiraph` trae `geom_text_repel_interactive()`**, así que no hubo que elegir
+entre etiquetas legibles y hover — se conservan las dos cosas.
+
+Cambios que trajo:
+- `geom_text_interactive` → `geom_text_repel_interactive`, anclado directamente en el
+  punto (`x = pos, y = ordenar`) en vez de en una posición calculada a mano.
+- **Se quitó la `geom_segment_interactive` manual**: ahora repel dibuja su propia línea
+  guía (`segment.linetype = "dashed"`). Es necesario, porque si repel mueve la etiqueta,
+  una línea fija se quedaría apuntando al vacío.
+- El alternado izquierda/derecha se conserva pero como **sesgo** (`nudge_x = lado * 0.6`)
+  en vez de posición fija: repel decide el lugar final.
+- Se limpió el código muerto que quedó: `x_nombre`, `h` y la función `y_nombres()`.
+
+⚠️ **`max.overlaps = Inf` es imprescindible.** Por defecto ggrepel vale 10 y **descarta
+etiquetas en silencio** cuando no encuentra dónde ponerlas — con 59 especies se habrían
+perdido decenas de nombres sin ningún aviso. Verificado explícitamente capturando los
+mensajes de `ggsave()`: **0 etiquetas descartadas**.
+
+También se fija `seed = 42` (el acomodo de repel es estocástico) para que la figura salga
+igual en cada render, y `min.segment.length = 0` para que siempre dibuje la línea guía.
 
 ### Interactividad al pasar el mouse (ggiraph)
 
@@ -763,15 +823,10 @@ puede trazar una línea horizontal a la altura de una ciudad conocida y así la 
 ancla su propia referencia ("mi ciudad está a X metros, o sea que aquí crecen estos
 frijoles").
 
-- **Datos**: `capitales_altitud` en `global.R` — las 32 capitales con su altitud en
-  msnm. Se ordenan de menor a mayor y se arma `capitales_opciones`, que muestra
-  `"Mérida (10 m)"` en el selector pero devuelve solo `"Mérida"`.
-  ⚠️ **Los valores son APROXIMADOS, puestos de memoria como punto de partida.** Están
-  en un solo bloque marcado con `⚠️ REVISAR` para que sea trivial corregirlos contra
-  INEGI antes de publicar. Ojo especial con Ciudad de México: se usó **2350 m** (valor
-  que dio el usuario); la cifra más citada para el centro histórico es ~2240 m, pero la
-  ciudad varía mucho por zona. Las costeras (Mérida, Campeche, Chetumal, Villahermosa)
-  quedaron todas en 10 m, que es una redondeada gruesa.
+- **Datos**: `capitales_altitud` en `global.R` — las 32 capitales con `ciudad`,
+  `estado`, `cvegeo` y `altitud`. Se ordenan de menor a mayor y se arma
+  `capitales_opciones`, que muestra `"Mérida (10 m)"` en el selector pero devuelve solo
+  `"Mérida"`. **Valores verificados contra INEGI** (ver abajo).
 - **UI**: `pickerInput` con `multiple = TRUE` y buscador, en la pestaña de Altitud.
   Arranca **sin ninguna seleccionada** (`selected = character(0)`) para no saturar.
   Permitir varias es deliberado: comparar Mérida (10 m) contra Toluca (2660 m) es
@@ -789,6 +844,137 @@ frijoles").
 
 **Detalle:** `label.size` está deprecado en ggplot2 3.5+ para `geom_label`; el
 reemplazo es `linewidth` (se usa `linewidth = 0` para quitarle el borde a la etiqueta).
+
+#### Verificación de las altitudes contra INEGI
+
+Los valores originales se pusieron de memoria. Se verificaron contra el **Catálogo Único
+de Claves de Áreas Geoestadísticas de INEGI** (archivo `AGEEML_*.csv`, julio 2026).
+
+**Resultado:** 27 de 32 estaban dentro de ±20 m y el error absoluto promedio era de
+16 m. Solo dos necesitaban corrección real: **Ciudad de México (2350 → 2230)** y
+**Chilpancingo (1360 → 1255)**. Cuatro ya estaban exactas.
+
+**Cómo se filtró.** El catálogo trae 296,658 localidades; hacen falta 32.
+
+- **`CVE_LOC = 0001` NO es la capital del estado, es la cabecera *municipal*.** Cada uno
+  de los ~2,476 municipios tiene su `0001`. Ese filtro es solo el primer paso: baja de
+  296 mil a 2,476. El segundo paso es escoger, dentro de cada entidad, el municipio que
+  es capital.
+- Se buscó cada capital por nombre **dentro de su `CVE_ENT`**, sobre `NOM_LOC`. Las 32
+  empataron con exactamente una fila; solo Tlaxcala dio dos candidatas y se resolvió
+  sola (*Santa Cruz Tlaxcala* es otro municipio).
+
+**Tres trampas del archivo**, todas encontradas en la práctica:
+
+1. **El CSV está mal formado.** Los campos `LATITUD`/`LONGITUD` traen comillas sin
+   escapar (`21°52´47.362"N`) dentro de un campo entrecomillado, lo que rompe cualquier
+   lector de CSV estándar. Se leyó partiendo por el separador literal `","`, que es
+   seguro aquí porque ningún nombre contiene esa secuencia. **El encabezado, en cambio,
+   no trae comillas** y hay que partirlo con coma simple.
+2. **El archivo viene en Latin-1 y con CRLF**, no en UTF-8.
+3. **`iconv(..., "ASCII//TRANSLIT")` en macOS convierte "É" en "'E"**, no en "E". Eso
+   hizo fallar exactamente las 6 capitales con acento (Tuxtla Gutiérrez, Oaxaca de
+   Juárez, Querétaro, San Luis Potosí, Culiacán, Mérida) sin ningún error visible. El
+   reemplazo confiable es `chartr("ÁÉÍÓÚÜÑáéíóúüñ", "AEIOUUNaeiouun", toupper(s))`.
+
+**Dos decisiones de contenido:**
+
+- **La Ciudad de México no existe como localidad única** en el catálogo: está partida en
+  16 alcaldías. Se usa **Cuauhtémoc (`090150001`, 2230 m)**, que es donde está el Zócalo.
+- `ciudad` y `estado` guardan los **nombres comunes que usa la app**, no los oficiales de
+  INEGI ("Coahuila", no "Coahuila de Zaragoza"). Verificado que los 32 valores de
+  `estado` empatan con la columna `Estado` de los datos de Phaseolus, así que la tabla es
+  unible con ellos.
+
+**Trazabilidad:** la columna `cvegeo` guarda la clave de 9 dígitos de la localidad, así
+que cada altitud se puede rastrear hasta su renglón de origen.
+
+**El CSV de INEGI está en `.gitignore`** (53 MB). La app no lo necesita para correr: los
+32 registros están escritos directamente en `global.R`. Se conserva local por si hay que
+volver a consultarlo.
+
+### Contador de especies en la esquina superior izquierda
+
+Un número grande con las especies que se están mostrando, que cambia al filtrar por
+estado (Chihuahua → 13, todos los estados → 59). Da idea inmediata de la riqueza de la
+selección.
+
+```r
+annotate("text", x = -Inf, y = max(LL$ordenar), label = n,
+         hjust = -0.25, vjust = 0.5,
+         size = 20, fontface = "bold", colour = "#7A5C2E") +
+annotate("text", x = -Inf, y = max(LL$ordenar),
+         label = if (n == 1) "especie" else "especies",
+         hjust = -0.32, vjust = 4, size = 6, colour = "#7A5C2E")
+```
+
+Tres decisiones que importan:
+
+- **`y = max(LL$ordenar)`**, no `y = Inf`. El primer intento lo ancló al borde superior
+  del panel y **se leía como una tercera línea del subtítulo**, no como parte de la
+  figura. Bajarlo a la altura de la especie más alta lo integra a la gráfica. `x = -Inf`
+  sí se conserva: lo pega al borde izquierdo sin depender del número de especies.
+- **Va al final de la cadena de `+`**, después de `geom_text_repel_interactive`, para que
+  se dibuje **encima**: ggrepel no sabe que la anotación existe y podría mandar un nombre
+  a esa esquina.
+- **Arriba a la izquierda es la zona vacía** de esta gráfica precisamente porque las
+  especies se ordenan de menor a mayor altitud: la montaña asciende de izquierda a
+  derecha, así que a la altura del máximo el lado izquierdo está despejado.
+
+**Trampa de `vjust`:** se mide en altos de **su propia letra**, no de la del elemento
+anterior. Como el número es `size = 20` y la palabra `size = 6`, la palabra necesita un
+`vjust` grande solo para librar los dígitos. No es un valor "mágico": es la altura del
+número expresada en altos de la palabra, y por eso los dos valores se mueven juntos
+(`0.5 / 4` anclados al máximo; eran `1.05 / 5.8` anclados al borde).
+
+**Verificado** en el caso de rango más comprimido (Chihuahua, 13 especies, 1600–2200 m)
+con una capital seleccionada: el contador no toca la montaña, ni las etiquetas, ni la
+línea de la ciudad.
+
+`n` ya estaba calculado (`n <- nrow(LL)`), así que no hubo que agregar ningún cálculo.
+
+### Descartado: animar la transición entre mínimo / promedio / máximo
+
+Se evaluó animar la gráfica (estilo D3.js) para que los puntos y sus nombres se
+deslizaran a su nueva posición al cambiar el selector. **Se descartó por diseño, no por
+dificultad técnica.**
+
+**La razón:** las especies se ordenan por la variable seleccionada, así que al cambiar el
+selector **no solo cambian de altura: cambian de lugar en el eje X**. Medido sobre las 59
+especies:
+
+| Cambio | Lugares que se mueve una especie (promedio) | Peor caso | Se quedan igual |
+|---|---|---|---|
+| mínimo → promedio | 9.4 | 37 | 5 de 59 |
+| promedio → máximo | 8.8 | 41 | 2 de 59 |
+| mínimo → máximo | **16.5** | **56** | **1 de 59** |
+
+Correlación de orden (Spearman) entre mínimo y máximo: **0.25** — órdenes casi
+independientes. Es esperable: una especie de rango amplio tiene mínimo bajo *y* máximo
+alto a la vez.
+
+Por eso la animación no se vería como puntos subiendo, sino como 59 puntos cruzándose en
+horizontal mientras suben y bajan, con ggrepel resolviendo las etiquetas desde cero. La
+animación solo comunica si el objeto que se mueve es el mismo de un estado a otro, y aquí
+no lo es.
+
+**La bifurcación era excluyente:** conservar el orden (montaña como perfil ascendente
+limpio, animación ilegible) o congelarlo (animación legible, montaña deja de ser un
+perfil ordenado en dos de las tres opciones). Se decidió conservar el orden: la gráfica
+actual ya comunica el rango con las tres bandas.
+
+**Sobre las herramientas**, por si se retoma en otro proyecto:
+
+- **Animar el SVG de ggiraph con JS** — trampa. Shiny reemplaza el SVG completo en cada
+  render, y la estructura interna del SVG de ggiraph no es API pública: cambia entre
+  versiones y se rompe en silencio.
+- **`echarts4r`** — camino medio real (transiciones y hover nativos), pero su evasión de
+  colisiones de etiquetas es mucho más débil que ggrepel.
+- **D3 puro (`r2d3`)** — control total, pero implica reescribir la gráfica en JS: se
+  pierden ggplot2, el suavizado loess, el tema y ggrepel (habría que rehacerlo con
+  `d3-force`), y la app queda partida en dos tecnologías.
+- **`gganimate`** — herramienta equivocada: produce un GIF que se reproduce solo, no
+  responde al selector.
 
 ## Interactividad en las otras dos gráficas
 
@@ -828,6 +1014,36 @@ con su color y su tooltip, separadas por un hueco para que **no distorsionen las
 proporciones** del waffle. Conservan su entrada en la leyenda. Además se agrega una nota
 al pie (`labs(caption = ...)`) que las lista por nombre. El tooltip de esas celdas muestra
 el porcentaje exacto (`pct_real`, sin redondear) para que se vea cuán raras son.
+
+### La leyenda del waffle se encimaba con la nota al pie
+
+**Problema:** con muchas especies la leyenda crecía hacia abajo más que la propia gráfica
+y su última entrada quedaba **encima de la nota al pie** de las especies raras. Se veía en
+Michoacán (18 especies) y Nayarit (20). El SVG tiene alto fijo (`height_svg = 7`), así que
+la leyenda no tenía a dónde crecer.
+
+**Solución** — una línea, en `guides()`:
+
+```r
+guides(fill = guide_legend(nrow = 11, title.theme = element_text(size = 20)))
+```
+
+`nrow = 11` topa la leyenda a 11 renglones; a partir de ahí `guide_legend` **se desborda a
+una segunda columna** en vez de seguir hacia abajo. Como `byrow = FALSE` es el valor por
+defecto, llena columna por columna, así que el orden de lectura (de más a menos frecuente)
+se conserva.
+
+No hay que ponerle un `if` según el número de especies: ggplot2 calcula
+`ncol = ceiling(n / nrow)`, de modo que con 9 especies (Colima) sigue saliendo **una sola
+columna**. El mismo parámetro cubre los dos casos.
+
+**Costo:** la leyenda a dos columnas ocupa más ancho y el waffle se encoge un poco. Se
+verificó que sigue legible en los tres casos.
+
+**Verificado** renderizando a PNG los casos extremos, sin levantar la app: Michoacán
+(18 → 11+7), Nayarit (20 → 11+9) y Colima (9 → una columna). Para revisar solo el acomodo
+de una gráfica, reproducirla en un script con `ggsave()` es mucho más rápido que reiniciar
+Shiny.
 
 ### Paletas del waffle: combinar paletas en vez de interpolar una
 
@@ -1052,15 +1268,33 @@ comportamiento estándar del módulo, no un descuido.
 (`my_filters-Habitat.1`, etc.) y no son triviales de re-apuntar con CSS sin inspeccionar
 el DOM generado. Si se quiere recuperar ese detalle visual, sería un ajuste aparte.
 
-**⚠️ Nota importante — deprecación:** al correr la app apareció este mensaje en consola:
-> `selectizeGroupUI/selectizeGroupServer have been deprecated and will be removed in a
-> future release of shinyWidgets. For a replacement see module select_group_ui /
-> select_group_server in package datamods.`
+**✅ Migrado a `datamods` (la deprecación quedó resuelta).** shinyWidgets avisaba que
+`selectizeGroupUI`/`selectizeGroupServer` están obsoletas y las va a retirar. Se migró a
+`datamods::select_group_ui()`/`select_group_server()` (1.5.3). Diferencias de la API que
+hay que conocer:
 
-Funciona hoy, pero en algún momento futuro habrá que migrar a
-`datamods::select_group_ui()`/`select_group_server()` (mismo patrón, paquete distinto).
-No es urgente, pero vale la pena tenerlo anotado para no llevarse la sorpresa cuando
-`shinyWidgets` lo retire.
+| | shinyWidgets (antes) | datamods (ahora) |
+|---|---|---|
+| Servidor | `callModule(selectizeGroupServer, id, data, vars)` | `select_group_server(id, data_r, vars_r)` — se llama **directo**, patrón `moduleServer` |
+| Argumentos | `data`, `vars` (valores) | `data_r`, `vars_r` (**reactivos**, de ahí el sufijo) |
+| Etiqueta de cada filtro | aceptaba `title` o `label` | **solo `label`** |
+| Botón de reinicio | `btn_label` | `btn_reset_label` |
+| Widget | selectize | `virtualSelectInput` (permite selección múltiple con casillas) |
+| Extra | — | `vs_args` para configurar el widget |
+
+⚠️ **Trampa:** al migrar tal cual, los filtros salieron **sin etiqueta**, solo con un
+"Select" genérico. La causa es la fila de `title` en la tabla: shinyWidgets aceptaba ese
+nombre, datamods lo ignora y solo lee `label`. Se detectó al revisarlo en el navegador,
+no daba error.
+
+**Mejora de usabilidad:** el panel de filtros mide 150px y los nombres de especie salían
+truncados ("Phaseolus a…"). Se resolvió ensanchando **solo el desplegable** con
+`vs_args = list(search = TRUE, dropboxWidth = "320px", searchPlaceholderText = "Buscar...")`,
+sin tener que ensanchar el panel. De paso quedó con buscador.
+
+**Nota:** `shinyWidgets` sigue siendo dependencia — se usa para los `pickerInput` de las
+otras pestañas (estados en Altitud, capitales, paleta del waffle). Lo único que se migró
+fue el módulo de filtros cruzados.
 
 **Verificación hecha:**
 - `Rscript -e "parse('ui.R'); parse('server.R')"` sin errores.
