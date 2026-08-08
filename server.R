@@ -186,7 +186,15 @@ FloFru1_data <- reactive({
 # Altura en píxeles según el número de especies (mínimo 600) — se usa tanto para
 # dimensionar el contenedor en la UI como para generar la imagen del mismo tamaño
 alto_graph4 <- reactive({
-  max(600, length(unique(FloFru1_data()$Especie)) * 28)
+  # 28 px por especie MÁS un margen fijo para el título y los dos ejes de meses.
+  # Antes era max(600, n * 28), y ese piso de 600 deformaba la gráfica: con
+  # Silvestres (55 especies) cada renglón medía 28 px, pero con Cultivados (5) el
+  # alto se quedaba en 600 y cada cuadro crecía a 120 px. El margen va SUMADO, no
+  # como mínimo, para que el renglón mida siempre lo mismo sin importar el filtro.
+  # Los 70 px del margen se midieron en el navegador comparando el alto del SVG contra
+  # el alto real de los cuadros: es lo que ocupan el título y los dos ejes de meses,
+  # y no cambia con el número de especies.
+  max(150, length(unique(FloFru1_data()$Especie)) * 28 + 70)
 })
 
 output$graph4 <- renderGirafe({
