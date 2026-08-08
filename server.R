@@ -121,8 +121,7 @@ shinyServer(
                                   "<br/>", "Municipio:",Tabla3$Municipio,
                                   "<br/>", "Localidad:",Tabla3$Localidad,
                                   "<br/>", "Altitud:",Tabla3$Altitud, "metros",
-                                  "<br/>", "Año de colecta:", Tabla3$AnioColecta,
-                                  "<br/>", "<br/>", "NA, ND, 9999 = no hay dato")) %>%
+                                  "<br/>", "Año de colecta:", Tabla3$AnioColecta)) %>%
         addLayersControl(
           baseGroups = c("Mapa", "Foto aérea"),
           position = "topright",
