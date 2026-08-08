@@ -103,7 +103,12 @@ shinyServer(
       zoom_actual   <- isolate(input$mymap1_zoom)
       centro_actual <- isolate(input$mymap1_center)
 
-      mapa <- leaflet() %>%
+      # zoomSnap = 0.25 permite niveles de zoom fraccionarios. Con el valor por defecto
+      # (1) leaflet solo usa enteros, y como México cabe en 5.5 pero no en 6, redondeaba
+      # a 5 y el país ocupaba apenas el 62% del ancho. Con 5.5 ocupa el 87%.
+      # zoomDelta = 1 se deja explícito para que los botones + y − sigan moviéndose un
+      # nivel completo y no de cuarto en cuarto.
+      mapa <- leaflet(options = leafletOptions(zoomSnap = 0.25, zoomDelta = 1)) %>%
         addProviderTiles(providers$CartoDB.Positron, group = "Mapa") %>%
         addProviderTiles(providers$Esri.WorldImagery, group = "Foto aérea") %>%
         addCircles(data = Tabla3, group = "Circles",
@@ -126,6 +131,14 @@ shinyServer(
       if (!is.null(zoom_actual) && !is.null(centro_actual)) {
         mapa <- mapa %>% setView(lng = centro_actual$lng, lat = centro_actual$lat,
                                  zoom = zoom_actual)
+      } else {
+        # Encuadre inicial: se ajusta al total de registros (todos en México, desde
+        # Baja California hasta Chiapas). El padding evita que los puntos del borde
+        # queden cortados a la mitad.
+        mapa <- mapa %>% fitBounds(
+          min(Mex3$Longitud, na.rm = TRUE), min(Mex3$Latitud, na.rm = TRUE),
+          max(Mex3$Longitud, na.rm = TRUE), max(Mex3$Latitud, na.rm = TRUE),
+          options = list(padding = c(15, 15)))
       }
       mapa
     })
