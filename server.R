@@ -87,8 +87,30 @@ shinyServer(
  #     options = layersControlOptions(collapsed = FALSE))
     
  #   map
+    # Aplica el deslizador de altitud y la casilla de "sin altitud" encima de los
+    # filtros de datamods.
+    #
+    # 855 de los 5,702 registros no tienen dato de altitud. Se manejan con dos reglas:
+    #
+    #  1. La casilla los quita explícitamente, si el usuario lo pide.
+    #  2. Mientras el deslizador esté en su rango completo NO filtra nada. Sin esa
+    #     guarda, una comparación como `Altitud >= min` los descartaría desde el
+    #     arranque (NA nunca cumple una comparación) y desaparecerían del mapa sin
+    #     que nadie hubiera tocado el control.
+    #
+    # Al acotar el rango sí se van, lo cual es correcto: no se sabe a qué altitud
+    # pertenecen, así que no pueden afirmarse dentro de ninguna franja.
+    points_altitud <- reactive({
+      d <- points()
+      if (isTRUE(input$sin_altitud)) d <- d[!is.na(d$Altitud), ]
+      r <- input$altitud_mapa
+      if (is.null(r) || (r[1] <= RANGO_ALTITUD_MAPA[1] && r[2] >= RANGO_ALTITUD_MAPA[2]))
+        return(d)
+      d[!is.na(d$Altitud) & d$Altitud >= r[1] & d$Altitud <= r[2], ]
+    })
+
     output$mymap1 <- renderLeaflet({
-      Tabla3 <- points()
+      Tabla3 <- points_altitud()
 
       # Vector de colores NOMBRADO POR ESPECIE. Que esté nombrado es lo que hace que
       # cada especie conserve su color al filtrar: se busca por nombre, no por posición

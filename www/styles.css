@@ -197,3 +197,17 @@ h1, h2, h3, h4, h5, h6,
   font-size: 13px;
   font-weight: normal;
 }
+
+/* Deslizador de altitud dentro del panel de filtros del mapa: se achican las
+   etiquetas para que los dos extremos quepan en un panel angosto */
+
+#controls .irs {
+  font-size: 11px;
+}
+
+#controls .irs-from,
+#controls .irs-to,
+#controls .irs-single {
+  font-size: 10px;
+  padding: 1px 3px;
+}

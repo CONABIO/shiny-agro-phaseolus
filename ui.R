@@ -200,7 +200,9 @@ dashboardPage(
           id = "controls",
           top = 166,
           right = 10,
-          width = 150,
+          # 190 y no 150: el deslizador de altitud necesita espacio para sus dos
+          # manijas y sus etiquetas; con 150 los números se encimaban
+          width = 190,
           draggable = T,
           fixed = F,
           style = "z-index:100;",
@@ -226,6 +228,32 @@ dashboardPage(
             # se ensancha solo el desplegable y se le agrega buscador
             vs_args = list(search = TRUE, dropboxWidth = "320px",
                            searchPlaceholderText = "Buscar...")
+          ),
+
+          # Filtro por altitud. Arranca en el rango completo, y mientras esté así
+          # NO filtra nada: eso mantiene visibles los registros sin dato de altitud,
+          # que de otro modo desaparecerían del mapa sin que nadie tocara el control
+          # (ver points_altitud en server.R).
+          sliderInput(
+            inputId = "altitud_mapa",
+            label = "Altitud:",
+            min = RANGO_ALTITUD_MAPA[1],
+            max = RANGO_ALTITUD_MAPA[2],
+            value = RANGO_ALTITUD_MAPA,
+            step = 50,
+            post = " m",
+            ticks = FALSE,
+            width = "100%"
+          ),
+
+          # Control explícito para los registros sin dato de altitud. Se ofrece
+          # aparte del deslizador porque son dos decisiones distintas: "qué franja
+          # de altitud me interesa" y "quiero o no los que no tienen el dato".
+          checkboxInput(
+            inputId = "sin_altitud",
+            label = paste0("Quitar sin altitud (",
+                           sum(is.na(Mex3$Altitud)), ")"),
+            value = FALSE
           ),
 
           # Botón de descarga de datos
