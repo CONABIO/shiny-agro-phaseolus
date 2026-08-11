@@ -279,6 +279,14 @@ dashboardPage(
                 liveSearchPlaceholder = "Buscar ciudad..."
               ),
               width = 200
+            ),
+            # Resalta en rojo el nombre de las cinco especies domesticadas
+            # (ver especies_domesticadas en global.R). No filtra: las demás
+            # siguen visibles, solo cambian de color las domesticadas.
+            checkboxInput(
+              inputId = 'domesticadas',
+              label = strong('Resaltar las especies domesticadas'),
+              value = FALSE
             )
           ),
           column(

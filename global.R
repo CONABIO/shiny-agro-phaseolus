@@ -58,6 +58,27 @@ nombres_combos <- names(combos_waffle)
 abreviar_especie <- function(x) sub("^Phaseolus\\s+", "P. ", as.character(x))
 
 # ---------------------------------------------------------------------------
+# Las cinco especies de frijol domesticadas en el mundo; cuatro se domesticaron en
+# México. Se usan para resaltarlas en la gráfica de Altitud.
+#
+# Ojo con las variedades: en dos casos lo domesticado NO es la especie completa sino
+# una variedad. `P. acutifolius var. acutifolius` y `P. lunatus var. lunatus` son las
+# cultivadas; `var. tenuifolius` y `var. silvester` son sus contrapartes silvestres y
+# NO deben resaltarse.
+#
+# Los registros identificados solo hasta especie ("Phaseolus acutifolius" y
+# "Phaseolus lunatus", sin variedad) quedan fuera a propósito: no se sabe si son la
+# forma cultivada o la silvestre.
+# ---------------------------------------------------------------------------
+especies_domesticadas <- c(
+  "Phaseolus vulgaris",
+  "Phaseolus coccineus",
+  "Phaseolus dumosus",
+  "Phaseolus acutifolius var. acutifolius",
+  "Phaseolus lunatus var. lunatus"
+)
+
+# ---------------------------------------------------------------------------
 # Altitud de las capitales de los 32 estados (metros sobre el nivel del mar).
 # Sirven como línea de referencia en la gráfica de Altitud: la gente ubica su
 # ciudad y ve de inmediato qué frijoles crecen a esa altura.

@@ -333,6 +333,17 @@ output$graph4 <- renderGirafe({
       # Espacio libre arriba para que ggrepel tenga a dónde mover los nombres
       techo <- max(LL$ordenar) + DESPEGUE * 3
 
+      # Color de cada nombre. Se guarda como columna con el color literal y se pinta con
+      # scale_colour_identity(): pasar un vector al parámetro `colour` funciona, pero
+      # depende de que las filas queden en el mismo orden, y ggrepel las reacomoda.
+      # Atándolo a los datos con aes() no hay forma de que se despareje.
+      resaltar <- isTRUE(input$domesticadas) &
+        as.character(LL$Especie) %in% especies_domesticadas
+      LL$color_nombre <- ifelse(resaltar, "#B40F20", "grey15")
+      # "bold.italic" y no "bold": la cursiva se conserva siempre, porque es la
+      # convención tipográfica para los nombres científicos.
+      LL$face_nombre  <- ifelse(resaltar, "bold.italic", "italic")
+
       # Los nombres se alternan: uno tiende hacia la izquierda de su punto y el
       # siguiente hacia la derecha. Ya no es una posición fija sino un sesgo que se le
       # pasa a ggrepel (nudge_x), porque él decide la posición final para evitar choques.
@@ -376,17 +387,21 @@ output$graph4 <- renderGirafe({
         geom_text_repel_interactive(
           data = LL,
           aes(x = pos, y = ordenar, label = etiqueta,
-              data_id = Especie,
+              data_id = Especie, colour = color_nombre, fontface = face_nombre,
               tooltip = paste0(Especie, "\n", round(ordenar), " m")),
           nudge_x = LL$lado * 0.6,
           nudge_y = DESPEGUE,
-          size = 4, fontface = "italic", colour = "grey15",
+          size = 4,
           segment.colour = "grey45", segment.linetype = "dashed",
           segment.size = 0.4,
           min.segment.length = 0,   # que siempre dibuje la línea guía
           box.padding = 0.3, point.padding = 0.2,
           max.overlaps = Inf,       # IMPRESCINDIBLE: si no, descarta nombres en silencio
           seed = 42) +              # para que el acomodo sea reproducible
+        # Usan el color y el estilo literales que traen las columnas, sin inventar
+        # una paleta ni una leyenda
+        scale_colour_identity() +
+        scale_discrete_identity(aesthetics = "fontface") +
         # Contador de especies visibles, arriba a la izquierda: es la zona vacía de la
         # figura, porque la montaña asciende de izquierda a derecha. Cambia al mover el
         # filtro de estados.
@@ -416,7 +431,12 @@ output$graph4 <- renderGirafe({
                                       "mínimo"   = "mínima"),
                                " de la especie\n",
                                "Las bandas de la montaña muestran el rango altitudinal: ",
-                               "mínimo (tono oscuro), promedio y máximo (tono claro)"),
+                               "mínimo (tono oscuro), promedio y máximo (tono claro)",
+                               # solo aparece cuando el resaltado está activo, para que
+                               # la figura se explique sola si alguien la exporta
+                               if (isTRUE(input$domesticadas))
+                                 "\nEn rojo y negritas, las especies domesticadas"
+                               else ""),
              x = NULL, y = NULL) +
         theme_minimal() +
         theme(plot.title = element_text(size = 18, face = "bold", hjust = 0.5),
