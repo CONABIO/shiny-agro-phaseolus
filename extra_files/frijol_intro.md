@@ -7,13 +7,15 @@ fibra y minerales importantes para una alimentación saludable.
 Descubre más sobre sus beneficios en [Qué nos aportan los frijoles](https://www.biodiversidad.gob.mx/diversidad/alimentos/que-nos-aportan/N_frijoles) 
 de la [CONABIO](https://www.biodiversidad.gob.mx/).
 
-[Frijoles, ayocotes, téparis e ibes](https://www.biodiversidad.gob.mx/diversidad/alimentos/frijoles) 
-son parte de la gran diversidad de leguminosas que existen en México: 
+Los [frijoles domesticados](https://www.biodiversidad.gob.mx/diversidad/alimentos/frijoles) 
+—frijol común (*Phaseolus vulgaris*), ayocotes (*P. coccineus*), téparis 
+(*P. acutifolius*), ibes (*P. lunatus*) y el frijol gordo (*P. dumosus*)— 
+son parte de la gran diversidad del género *Phaseolus* en México: 
 57 especies, de las cuales 31 crecen únicamente en nuestro país.
 Además, cuatro de las cinco especies de frijol domesticadas en el 
 mundo son originarias de México. Esta riqueza se refleja también 
-en la enorme variedad de tamaños, formas y colores que presentan y
-puede verse en 
+en la enorme variedad de tamaños, formas y colores que presentan, 
+como puede verse en 
 el [*Cartel de Frijoles Domesticados en México*](https://bioteca.biodiversidad.gob.mx/janium-bin/janium_login_opac.pl?find&ficha_no=14176), elaborado por **CONABIO**.
 
 
