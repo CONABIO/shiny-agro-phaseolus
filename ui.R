@@ -48,6 +48,11 @@ dashboardPage(
         icon = icon("certificate")
       ),
       menuItem(
+        "Altitud por especie",
+        tabName = "altitud_especie",
+        icon = icon("chart-line")
+      ),
+      menuItem(
         "Floración y fructificación",
         tabName = "widgets3",
         icon = icon("adjust")
@@ -296,6 +301,61 @@ dashboardPage(
             # gráfica interactiva (ggiraph): al pasar el mouse por una especie se
             # resaltan su punto, su línea punteada y su nombre a la vez
             girafeOutput('graph2', height = "auto", width = "100%")
+          )
+        )
+      ), # close widget page
+
+      ## Altitud por especie: el gradiente completo de cada especie elegida,
+      ## registro por registro, en vez del resumen mínimo/promedio/máximo.
+      tabItem(
+        tabName = "altitud_especie",
+        br(),
+        br(),
+        fluidRow(
+          column(
+            width = 3,
+            pickerInput(
+              inputId = 'especies_alt',
+              label = h6(strong('Especie:')),
+              # solo las que tienen más de 4 altitudes distintas: con menos no hay
+              # gradiente que dibujar (ver especies_con_gradiente en global.R)
+              choices = especies_con_gradiente,
+              # arranca con dos contrastantes: vulgaris abarca desde el nivel del
+              # mar y coccineus vive claramente más alto
+              selected = c("Phaseolus vulgaris", "Phaseolus coccineus"),
+              multiple = TRUE,
+              options = pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                selectedTextFormat = "count > 2",
+                countSelectedText = "{0} especies",
+                noneSelectedText = "Ninguna especie",
+                selectAllText = "Todas",
+                deselectAllText = "Ninguna",
+                liveSearchPlaceholder = "Buscar especie..."
+              ),
+              width = 200
+            ),
+            # mismas líneas de referencia que en la pestaña de Altitud
+            pickerInput(
+              inputId = 'capitales2',
+              label = h6(strong('Comparar con la altitud de:')),
+              choices = capitales_opciones,
+              selected = character(0),
+              multiple = TRUE,
+              options = pickerOptions(
+                liveSearch = TRUE,
+                selectedTextFormat = "count > 1",
+                countSelectedText = "{0} ciudades",
+                noneSelectedText = "Ninguna ciudad",
+                liveSearchPlaceholder = "Buscar ciudad..."
+              ),
+              width = 200
+            )
+          ),
+          column(
+            width = 9,
+            girafeOutput('graph5', height = "auto", width = "100%")
           )
         )
       ), # close widget page

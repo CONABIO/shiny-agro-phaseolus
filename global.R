@@ -236,6 +236,30 @@ Mex3$Especie <- as.factor(Mex3$Especie)
 # fuente de datos filtrados de la app.
 
 # ---------------------------------------------------------------------------
+# Especies que se ofrecen en la pestaña "Altitud por especie".
+#
+# Esa gráfica dibuja el gradiente altitudinal de cada especie, así que necesita varios
+# valores distintos para que haya algo que mostrar: con uno o dos puntos no se ve un
+# gradiente, se ve ruido. Se piden más de 4 altitudes DISTINTAS (no registros crudos:
+# cincuenta colectas a 100 m siguen siendo un solo punto en esa figura).
+#
+# Deja fuera 10 de las 59 especies con dato de altitud; las 49 restantes se ofrecen en
+# el selector. Las excluidas siguen apareciendo en el resto de la app.
+# ---------------------------------------------------------------------------
+MIN_ALTITUDES_GRADIENTE <- 5
+
+# Extremos del deslizador de altitud del mapa. Se calculan de los datos para que el
+# control se ajuste solo si estos cambian, y ui.R y server.R los leen de aquí para
+# coincidir en qué significa "rango completo".
+RANGO_ALTITUD_MAPA <- range(Mex3$Altitud, na.rm = TRUE)
+
+especies_con_gradiente <- local({
+  u <- dplyr::distinct(Mex3[!is.na(Mex3$Altitud), ], Especie, Altitud)
+  n <- table(droplevels(u$Especie))
+  sort(names(n)[n >= MIN_ALTITUDES_GRADIENTE])
+})
+
+# ---------------------------------------------------------------------------
 # Paletas del mapa de Distribución (selector en la esquina inferior izquierda).
 #
 # El color del mapa NO pretende que se identifique cada especie: con 60 especies eso

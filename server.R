@@ -466,7 +466,124 @@ output$graph4 <- renderGirafe({
       )
     })
 
-    #    
+  # ---- Altitud por especie -------------------------------------------------
+  # Igual que la pestaña de Altitud pero SIN resumir: en vez de un punto por especie
+  # (su promedio, máximo o mínimo), se dibuja el gradiente completo — cada altitud
+  # donde se ha registrado esa especie.
+  #
+  # Cada especie tiene su propia montaña y el eje X es el PORCENTAJE de sus registros,
+  # no un conteo. Eso es lo que permite comparar especies con volúmenes muy distintos:
+  # P. vulgaris tiene 300 altitudes distintas y P. dumosus 40, pero ambas curvas van de
+  # 0 a 100% y se pueden leer una contra otra.
+    Mex11 <- reactive({
+      req(input$especies_alt)
+      d <- Mex3[!is.na(Mex3$Altitud) &
+                  as.character(Mex3$Especie) %in% input$especies_alt, ]
+      # distinct(): una misma altitud repetida en decenas de colectas aporta un solo
+      # punto. Sin esto, P. vulgaris dibujaría 1387 puntos encimados en vez de 300.
+      d <- dplyr::distinct(d, Especie, Altitud, .keep_all = TRUE)
+      d$Especie <- droplevels(factor(as.character(d$Especie)))
+      d %>%
+        dplyr::group_by(Especie) %>%
+        dplyr::arrange(Altitud, .by_group = TRUE) %>%
+        # con una sola altitud no hay gradiente que recorrer: se coloca al centro
+        dplyr::mutate(pct = if (dplyr::n() > 1)
+          (dplyr::row_number() - 1) / (dplyr::n() - 1) * 100 else 50) %>%
+        dplyr::ungroup()
+    })
+
+    alto_graph5 <- reactive({
+      # alto fijo: a diferencia de Altitud, aquí el número de renglones no crece con
+      # los datos, solo se acumulan curvas sobre el mismo espacio
+      700
+    })
+
+    output$graph5 <- renderGirafe({
+      D <- Mex11()
+      validate(need(nrow(D) > 0,
+                    "No hay datos de altitud para las especies seleccionadas."))
+
+      # Los colores se asignan por posición entre las especies ELEGIDAS, tomando la
+      # Paleta 2 del mapa, que está ordenada de mayor a menor contraste. Así los
+      # primeros colores son siempre los más distinguibles entre sí.
+      cols <- setNames(rep_len(paletas_mapa[["Paleta 2"]], nlevels(D$Especie)),
+                       levels(D$Especie))
+      # la leyenda usa el nombre abreviado; el tooltip conserva el completo
+      etiquetas <- setNames(abreviar_especie(levels(D$Especie)), levels(D$Especie))
+
+      techo <- max(D$Altitud) * 1.12
+
+      caps <- capitales_altitud[capitales_altitud$ciudad %in% input$capitales2, ]
+      caps <- caps[caps$altitud <= techo, ]
+      capa_capitales <- if (nrow(caps) > 0) {
+        list(
+          geom_hline(data = caps, aes(yintercept = altitud),
+                     colour = "#1F6F8B", linewidth = 0.5, linetype = "longdash"),
+          geom_label(data = caps,
+                     aes(x = -Inf, y = altitud,
+                         label = paste0(ciudad, " · ", altitud, " m")),
+                     hjust = 0, vjust = -0.25, size = 4, colour = "#1F6F8B",
+                     fill = "white", linewidth = 0, label.padding = unit(1.2, "pt"))
+        )
+      } else NULL
+
+      cinco <- ggplot(D, aes(x = pct, y = Altitud)) +
+        # el área rellena convierte cada curva en una "montaña", igual que en Altitud
+        geom_area(aes(group = Especie, fill = Especie),
+                  position = "identity", alpha = 0.22, colour = NA) +
+        capa_capitales +
+        # data_id = Especie: al pasar el mouse por cualquier punto se resalta el
+        # gradiente completo de esa especie y se atenúan las demás
+        geom_point_interactive(
+          aes(colour = Especie, data_id = Especie,
+              tooltip = paste0(Especie, "\n", round(Altitud), " m")),
+          size = 1.2, alpha = 0.9) +
+        scale_colour_manual(values = cols, labels = etiquetas, name = NULL) +
+        scale_fill_manual(values = cols, guide = "none") +
+        scale_y_continuous(labels = function(x) paste0(x, " m"),
+                           limits = c(0, techo), expand = c(0, 0)) +
+        scale_x_continuous(labels = function(x) paste0(x, "%"),
+                           limits = c(0, 100), expand = expansion(mult = c(0.02, 0.02))) +
+        labs(title = "Gradiente altitudinal por especie",
+             subtitle = paste0("Cada punto es una altitud donde se ha registrado la ",
+                               "especie, de la más baja a la más alta\n",
+                               "El eje horizontal es el porcentaje de los registros de ",
+                               "cada especie, para poder compararlas entre sí"),
+             caption = paste0("Solo se incluyen las especies con más de ",
+                              MIN_ALTITUDES_GRADIENTE - 1,
+                              " altitudes distintas registradas (",
+                              length(especies_con_gradiente), " de ",
+                              nlevels(droplevels(Mex3$Especie[!is.na(Mex3$Altitud)])),
+                              "): con menos no hay gradiente que mostrar."),
+             x = NULL, y = NULL) +
+        theme_minimal() +
+        theme(plot.title = element_text(size = 18, face = "bold", hjust = 0.5),
+              plot.subtitle = element_text(size = 14, colour = "grey40", hjust = 0.5),
+              panel.grid.minor = element_blank(),
+              panel.grid.major.y = element_line(colour = "grey88", linetype = "dashed"),
+              axis.text = element_text(size = 12),
+              plot.caption = element_text(colour = "grey45", hjust = 0, size = 11,
+                                          face = "italic"),
+              plot.caption.position = "plot",
+              legend.position = "top",
+              legend.text = element_text(size = 13, face = "italic"))
+
+      girafe(
+        ggobj = cinco,
+        width_svg = 12,
+        height_svg = alto_graph5() / 72,
+        options = list(
+          opts_hover(css = "fill:#B40F20; stroke:#B40F20; stroke-width:1.2pt;"),
+          opts_hover_inv(css = "opacity:0.25;"),
+          opts_tooltip(css = "background-color:#333; color:#fff; padding:5px;
+                              border-radius:4px; font-size:12px;"),
+          opts_toolbar(saveaspng = FALSE),
+          opts_sizing(rescale = TRUE)
+        )
+      )
+    })
+
+    #
     points2 <- reactive({
       #input$update
       
