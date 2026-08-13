@@ -1247,6 +1247,297 @@ Vale la pena descartarlo antes de suponer que la regla CSS está mal escrita.
 navegador hay que esperar a que `document.querySelectorAll('#mymap1 path').length > 0`
 antes de concluir que algo falló — más de una vez pareció roto y solo estaba dibujando.
 
+## Pestaña de Referencias
+
+Los tres bloques de citas —proyecto, informe y base de datos— se sacaron de la
+introducción a una pestaña propia, porque alargaban la página de entrada sin ser lo que
+la gente va a leer primero.
+
+Sigue el **mismo patrón que la Introducción**: el texto vive en su propio archivo,
+`extra_files/frijol_referencias.md`, y se inyecta con `includeMarkdownNewTab()`. Eso
+permite editar las referencias sin tocar código de R, y las ligas abren en pestaña nueva.
+
+```r
+tabItem(
+  tabName = "referencias",
+  fluidRow(
+    column(width = 10, offset = 1,
+      div(class = "contenido-frijol", style = "margin-top: 35px;",
+          includeMarkdownNewTab("extra_files/frijol_referencias.md")))))
+```
+
+**El `margin-top: 35px` no es decorativo:** el cintillo superior mide 50 px y sin ese
+margen el título de la pestaña **se le encimaba**. Se detectó midiendo en el navegador —
+el `h1` quedaba a 45 px del tope.
+
+En la introducción se dejó una línea que remite a la pestaña, para que nadie se quede sin
+saber de dónde salieron los datos.
+
+## Filtro de altitud en el mapa (deslizador + casilla)
+
+Un `sliderInput` de rango y una casilla para quitar los registros sin dato, ambos en el
+panel de filtros. El panel se ensanchó de 150 a 190 px porque el deslizador necesita
+espacio para sus dos manijas y sus etiquetas.
+
+```r
+points_altitud <- reactive({
+  d <- points()
+  if (isTRUE(input$sin_altitud)) d <- d[!is.na(d$Altitud), ]
+  r <- input$altitud_mapa
+  if (is.null(r) || (r[1] <= RANGO_ALTITUD_MAPA[1] && r[2] >= RANGO_ALTITUD_MAPA[2]))
+    return(d)
+  d[!is.na(d$Altitud) & d$Altitud >= r[1] & d$Altitud <= r[2], ]
+})
+```
+
+### ⚠️ La guarda del rango completo no es un detalle
+
+**855 de los 5,702 registros no tienen altitud, y los 855 SÍ tienen coordenadas.** Son
+puntos válidos del mapa a los que solo les falta ese atributo.
+
+En R **un `NA` nunca cumple una comparación**, así que `Altitud >= min` los descarta
+aunque el deslizador esté en su rango completo. Sin el `if` que corta antes de filtrar,
+esos 855 puntos habrían desaparecido del mapa **desde el arranque**, sin que nadie tocara
+el control — una pérdida del 15% de los datos que nadie habría notado.
+
+Al acotar el rango sí salen, y eso sí es correcto: si no se sabe a qué altitud
+pertenecen, no se puede afirmar que estén dentro de ninguna franja.
+
+La casilla se agregó a propuesta del usuario, y mejoró el diseño: vuelve **explícita** una
+decisión que iba a quedar escondida en la lógica del deslizador. Su etiqueta muestra el
+conteo — "Quitar sin altitud (855)" — para saber cuánto se está quitando antes de marcarla.
+
+**Verificado:** 5,693 puntos → 4,838 al marcar la casilla (exactamente −855), y 1,680 al
+pedir el rango 2000–3200 m.
+
+## Encuadre del mapa: zoom fraccionario y conservar la vista
+
+**Problema 1.** México ocupaba el 62% del ancho disponible. La causa no eran los datos
+—que ya estaban acotados al país— sino que **leaflet solo usa niveles de zoom enteros**
+por defecto: México cabe en 5.5 pero no en 6, así que redondeaba a 5.
+
+```r
+leaflet(options = leafletOptions(zoomSnap = 0.25, zoomDelta = 1))
+```
+
+Con `zoomSnap = 0.25` arranca en 5.5 y ocupa el 87%. `zoomDelta = 1` se deja explícito
+para que los botones `+` y `−` sigan moviéndose un nivel completo; si no, avanzarían de
+cuarto en cuarto y se sentirían lentos.
+
+**Problema 2.** Cada cambio de filtro o de paleta reconstruye el mapa y devolvía la vista
+al encuadre inicial.
+
+```r
+zoom_actual   <- isolate(input$mymap1_zoom)
+centro_actual <- isolate(input$mymap1_center)
+# ... y al final, setView() si existen, fitBounds() si no
+```
+
+**`isolate()` es imprescindible:** sin él, leer esos inputs —que el propio mapa actualiza
+al moverse— crea un ciclo infinito de redibujado.
+
+### ⚠️ El camino "correcto" que no funciona aquí
+
+Lo canónico sería separar el mapa: `renderLeaflet` para la base y un `observe()` con
+`leafletProxy()` para los círculos, así no se reconstruye nada. **Se intentó y falló:**
+la app arranca en Introducción, el observador mandaba los círculos antes de que el mapa
+existiera y el mensaje se perdía. El mapa se veía vacío hasta tocar un filtro.
+
+Y la corrección obvia, `outputOptions(output, "mymap1", suspendWhenHidden = FALSE)`,
+rompe otra cosa: Leaflet se inicializa con tamaño 0×0 y el mapa queda gris, sin tiles.
+
+Por eso quedó el bloque único con `isolate()`. No es lo más elegante, pero es lo que
+funciona sin efectos colaterales.
+
+## Resaltar las especies domesticadas en Altitud
+
+Una casilla que pinta en **rojo y negritas** el nombre de las cinco especies domesticadas.
+
+```r
+resaltar <- isTRUE(input$domesticadas) &
+  as.character(LL$Especie) %in% especies_domesticadas
+LL$color_nombre <- ifelse(resaltar, "#B40F20", "grey15")
+LL$face_nombre  <- ifelse(resaltar, "bold.italic", "italic")
+# ... aes(colour = color_nombre, fontface = face_nombre)
+scale_colour_identity() +
+scale_discrete_identity(aesthetics = "fontface")
+```
+
+**Por qué con `aes()` y escalas identity, y no con un vector:** pasar un vector al
+parámetro `colour` funciona, pero depende de que las filas queden en el mismo orden — y
+**ggrepel las reacomoda**. Atándolo a los datos con `aes()` no hay forma de que se
+desparejen.
+
+`"bold.italic"` y no `"bold"`: la cursiva se conserva siempre, por la convención
+tipográfica de los nombres científicos.
+
+### La lista de domesticadas y el matiz de las variedades
+
+En `global.R`, explícita y documentada. **Dos de las cinco no son la especie completa
+sino una variedad:**
+
+- `P. acutifolius var. acutifolius` es la cultivada; `var. tenuifolius` es la silvestre
+- `P. lunatus var. lunatus` es la cultivada; `var. silvester` es la silvestre
+
+Y los registros identificados solo hasta especie (`Phaseolus acutifolius` a secas) quedan
+**fuera a propósito**: no se sabe si son la forma cultivada o la silvestre.
+
+## Pestaña nueva: Altitud por especie
+
+Muestra el gradiente completo de cada especie elegida —cada altitud donde se ha
+registrado— en vez del resumen mínimo/promedio/máximo.
+
+**Antes de construirla se compararon dos diseños** renderizando ambos a PNG: una montaña
+combinada con todos los registros, o una montaña por especie con el eje X en porcentaje.
+Se eligió la segunda porque con la primera *P. vulgaris* aportaba la mitad de los puntos y
+dominaba la curva, dejando a las demás como puntitos sueltos. Con una sola especie
+seleccionada las dos opciones dan la misma gráfica; la diferencia solo aparece al comparar.
+
+### `distinct()` — la sugerencia que hizo legible la figura
+
+Propuesta del usuario. Una misma altitud repetida en decenas de colectas aporta **un solo
+punto**:
+
+```r
+d <- dplyr::distinct(d, Especie, Altitud, .keep_all = TRUE)
+```
+
+*P. vulgaris* pasó de **1,387 registros a 300 valores distintos**. En total, de 4,847 a
+2,027.
+
+### El eje X en porcentaje, no en conteo
+
+Es lo que permite comparar especies con volúmenes muy distintos: una con 300 altitudes y
+otra con 40, ambas van de 0 a 100%. El `if (n() > 1) ... else 50` evita una división entre
+cero cuando una especie tiene un solo valor.
+
+### Umbral de especies ofrecidas
+
+```r
+MIN_ALTITUDES_GRADIENTE <- 5
+```
+
+Con una o dos altitudes no hay gradiente, se ve ruido. El umbral cuenta **altitudes
+distintas, no registros crudos**. Deja fuera 10 de las 59 especies, y una nota al pie lo
+explica para que nadie piense que faltan datos por error.
+
+### Menú anidado
+
+Con dos pestañas de altitud, el menú se ordenó agrupándolas:
+
+```r
+menuItem("Altitud", icon = icon("certificate"), startExpanded = TRUE,
+  menuSubItem("Altitud global",      tabName = "widgets1"),
+  menuSubItem("Altitud por especie", tabName = "altitud_especie"))
+```
+
+**El `menuItem` padre NO lleva `tabName`**: competiría con sus hijos por la selección.
+Verificado que el atajo desde la caja de la Introducción (`updateNavbarPage` a `widgets1`)
+sigue funcionando y **abre el submenú solo**.
+
+## Cuadro multicolor en el waffle
+
+Vino de una crítica de los colegas del usuario: *si las especies raras son parte del
+universo de frijoles, deberían verse en la figura*, no debajo de ella.
+
+**La regla, propuesta por el usuario:** se le quita un cuadro a la especie más pequeña de
+la rejilla, ese cuadro se vuelve un **cuadro multicolor** que representa al grupo, y esa
+especie baja a la fila inferior junto con las raras. La rejilla conserva sus 100 cuadros.
+
+El cuadro no es un degradado: es **una franja por especie excluida**, con su color.
+
+```r
+franjas <- data.frame(
+  xmin = cx - 0.45 + (0:(ne - 1)) * (0.9 / ne),
+  xmax = cx - 0.45 + (1:ne)       * (0.9 / ne),
+  ymin = cy - 0.45, ymax = cy + 0.45, ...)
+geom_rect_interactive(data = franjas, aes(...), colour = NA, inherit.aes = FALSE)
+```
+
+### ⚠️ `inherit.aes = FALSE` es imprescindible
+
+Sin él, `geom_rect` hereda el `aes(x = columna, y = fila)` global del `ggplot()` y falla
+con *"objeto 'columna' no encontrado"*, porque esos datos no tienen esa columna.
+
+### Un efecto secundario que salió gratis
+
+Cada franja lleva el `data_id` de **su propia especie**, no del grupo. Como el cuadro de
+esa especie en la fila inferior comparte ese `data_id`, **al pasar el mouse por una rayita
+se resaltan los dos a la vez**: el multicolor queda conectado con la fila de abajo y
+señalar una franja te dice cuál de las especies es.
+
+El tooltip sí es común a todas las franjas y muestra el conjunto ("Todas juntas: 2.2% de
+los registros"); el dato individual está en el cuadro de abajo.
+
+**La regla se activa sola:** si un estado no tiene especies fuera (Nayarit, Colima), no
+aparece el multicolor y la rejilla se dibuja como siempre.
+
+### Un intento descartado: las raras como segunda leyenda
+
+Antes de esto se probó moverlas a la derecha, bajo la leyenda. **Sí se puede** —mapeándolas
+a `colour` en vez de `fill`, ggplot genera una segunda leyenda y la apila— pero el usuario
+lo rechazó por dos razones válidas: en la fila inferior son **cuadros del mismo tamaño que
+los del waffle**, así que se entienden como "lo que no alcanzó a ocupar un cuadro", y en
+la leyenda se volvían llaves pequeñas que perdían esa relación. Además se perdía el
+tooltip con el porcentaje exacto.
+
+## Barra de herramientas de las gráficas
+
+```r
+opts_toolbar(saveaspng = TRUE, pngname = "altitud_global", hidden = "selection")
+```
+
+- **`hidden = "selection"`** quita los dos botones de lazo, que no se usan.
+- **`saveaspng = TRUE`**: estaba en `FALSE` desde antes, así que **la descarga en PNG
+  llevaba tiempo apagada** sin que nadie lo notara.
+- **`pngname`** le da nombre propio al archivo de cada gráfica; sin él todas se descargan
+  como `diagram.png`.
+
+## Bug del modal de pantalla completa (ggiraph 0.9.6)
+
+Reportado por el usuario: en Safari la figura salía diminuta dentro de una caja blanca
+alta y angosta al usar pantalla completa. En Chrome y Firefox se veía bien.
+
+**Primer diagnóstico, equivocado:** se atribuyó a la proporción de la gráfica. Al saber
+que en Chrome y Firefox funcionaba, quedó descartado.
+
+**La causa real está en el CSS que instala el paquete** (`htmlwidgets/girafe.css`):
+
+```css
+.ggiraph-fullscreen-content {
+  height: 90vw;      /* vw = ANCHO de la ventana, usado como ALTO */
+  max-height: 90vh;
+  /* no declara ningún width */
+}
+```
+
+`90vw` es casi seguro un typo por `90vh`. **Y no es exclusivo de Safari:** medido en
+Chromium, el modal daba **366×648 px en una ventana de 1280×720**.
+
+La corrección va en `www/styles.css`, que se sirve a todos los usuarios sin depender de su
+navegador. Con ella el modal pasó a **1178×662 px**.
+
+**Reportado río arriba** como bug en el repo de ggiraph. Si una versión futura lo corrige,
+ese bloque de CSS se puede quitar.
+
+## Alto de la gráfica de Floración: el piso que deformaba los cuadros
+
+Con el filtro en *Cultivados* (5 especies) los cuadros se veían enormes; con *Silvestres*
+(55) se veían normales.
+
+La causa era `max(600, n * 28)`: ese **piso de 600 px** obligaba a la gráfica a medir 600
+aunque solo hubiera 5 especies, y los cuadros se estiraban para llenarlo. Con 55 especies
+el piso nunca se activaba, por eso solo se notaba en Cultivados.
+
+```r
+max(150, length(unique(FloFru1_data()$Especie)) * 28 + 70)
+```
+
+El margen del título y los dos ejes de meses va **sumado, no como mínimo**. Los 70 px se
+midieron en el navegador comparando el alto del SVG contra el alto real de los cuadros.
+
+**Verificado:** Silvestres 25.3 px por renglón, Cultivados 25.7 px. Antes eran 26 y 120.
+
 ## Tipografía: qué alcanza el CSS y qué no
 
 El usuario pidió que la tipografía de `www/styles.css` (PT Sans para texto, Oswald para
