@@ -1,11 +1,15 @@
 .Rproj.user
 .Rhistory
 .RData
-.Rprofile
 .Ruserdata
 .DS_Store
-renv
 Rplots.pdf
+
+# .Rprofile y renv/activate.R SI se versionan: son los que hacen que renv se active
+# solo al abrir el proyecto. Sin ellos, quien clone el repo correria la app con los
+# paquetes de su biblioteca global en vez de los del lockfile, sin darse cuenta.
+# La biblioteca en si (renv/library, 9.2 MB) queda fuera por el .gitignore que el
+# propio renv mantiene dentro de esa carpeta.
 
 # Guia de trabajo personal, no forma parte del proyecto
 skill_distribucion_correccion.md
