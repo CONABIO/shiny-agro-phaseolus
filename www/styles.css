@@ -211,3 +211,30 @@ h1, h2, h3, h4, h5, h6,
   font-size: 10px;
   padding: 1px 3px;
 }
+
+/* -----------------------------------------------------------------------------
+   Corrección del modal de pantalla completa de ggiraph (0.9.6).
+   Su propio CSS declara `.ggiraph-fullscreen-content { height: 90vw; }` — vw es el
+   ANCHO de la ventana usado como ALTO, casi seguro un typo por 90vh — y no declara
+   ningún width. Chrome y Firefox lo compensan con el max-height, pero Safari resuelve
+   el ancho de otra manera y la figura sale diminuta dentro de una caja alta y angosta.
+   Se le dan medidas explícitas para que el resultado sea igual en todos.
+   ----------------------------------------------------------------------------- */
+
+.ggiraph-fullscreen-content {
+  width: 92vw !important;
+  height: auto !important;
+  max-width: 92vw !important;
+  max-height: 92vh !important;
+  overflow: auto;
+}
+
+.ggiraph-fullscreen-content > div,
+.ggiraph-fullscreen-content > div > div {
+  width: 100%;
+}
+
+.ggiraph-fullscreen-content svg {
+  width: 100%;
+  height: auto;
+}
