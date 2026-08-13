@@ -159,9 +159,17 @@ de su membresía en la organización.
 
 ## Manejo de dependencias (renv)
 
-- El repo incluye `renv.lock` pero **no** la carpeta `renv/` ni `.Rprofile`
-  (están en `.gitignore` — es lo normal, no se versiona la librería instalada).
-- Esto significa que en un clon nuevo, renv no se activa automáticamente.
+- El repo incluye `renv.lock`, `.Rprofile` y `renv/activate.R`. **Los tres se versionan
+  a propósito**: son los que hacen que renv se active solo al abrir el proyecto.
+- Lo que NO se versiona es `renv/library/` (9.2 MB), la biblioteca instalada. De eso se
+  encarga el `.gitignore` que el propio renv mantiene **dentro** de esa carpeta.
+- **Esto se corrigió el 13 de agosto de 2026.** Antes el `.gitignore` raíz excluía
+  `renv` completo y `.Rprofile`, así que en un clon nuevo renv **no se activaba**. El
+  riesgo no era que fallara, sino peor: la app podía arrancar usando los paquetes de la
+  biblioteca global del usuario en vez de los del lockfile, con versiones distintas a
+  las probadas, **sin dar ningún aviso**.
+- Al cambiarlo hay que verificar con `git add -n renv/` que no se cuele la biblioteca.
+  Deben entrar solo `renv/.gitignore` y `renv/activate.R`.
 - Error inicial al correr la app: `there is no package called 'waffle'`
   (y luego `tidyverse` también faltante) — paquetes no instalados en la máquina local.
 - Solución (en vez de instalar paquetes uno por uno, que podría traer versiones
@@ -186,6 +194,65 @@ de su membresía en la organización.
   probó con versiones específicas; actualizar sin control puede romper funciones por
   cambios de sintaxis entre versiones (breaking changes), generando errores difíciles
   de diagnosticar. Es como un `node_modules` por proyecto: aislado y reproducible.
+
+### Entorno de referencia — `sessionInfo()`
+
+Este es el entorno exacto en el que la app quedó desarrollada y probada. Sirve como punto
+de comparación si en otra máquina algo se comporta distinto. **La fuente autoritativa
+sigue siendo `renv.lock`**; esto es la foto legible de lo que produce.
+
+Generado el **13 de agosto de 2026**, en sesión limpia y tras cargar los 26 `library()`
+que usa la app.
+
+```text
+R version 4.5.1 (2025-06-13)
+Platform: x86_64-apple-darwin20
+Running under: macOS Sonoma 14.6.1
+
+attached base packages:
+stats  graphics  grDevices  datasets  utils  methods  base
+
+other attached packages (37):
+colorspace_2.1-3      datamods_1.5.3        dplyr_1.2.1
+forcats_1.0.1         ggalt_0.6.2           ggiraph_0.9.6
+ggmap_4.0.2           ggplot2_4.0.3         ggrepel_0.9.8
+ggthemes_5.2.0        httr_1.4.8            lattice_0.22-7
+latticeExtra_0.6-31   leaflet_2.2.3         lubridate_1.9.5
+markdown_2.0          permute_0.9-10        plotly_4.12.1
+plyr_1.8.9            purrr_1.2.2           RColorBrewer_1.1-3
+readr_2.2.0           readxl_1.5.0          shiny_1.14.0
+shinydashboard_0.7.3  shinydashboardPlus_2.0.6  shinyjs_2.1.1
+shinyWidgets_0.9.1    sp_2.2-3              stringr_1.6.0
+tableHTML_2.1.3       tibble_3.3.1          tidyr_1.3.2
+tidyverse_2.0.0       vegan_2.7-5           waffle_1.0.2
+wesanderson_0.3.7
+
+loaded via a namespace (and not attached): 81 paquetes más
+```
+
+**El lockfile completo tiene 185 paquetes** — los 37 de arriba más sus dependencias.
+
+#### Lo que hay que saber antes de restaurar en otra máquina
+
+| Requisito | Detalle |
+|---|---|
+| **R ≥ 4.4** | Obligatorio. Con 4.3 o menos, `Matrix` no instala y se cae toda la cadena. El lockfile fija **4.5.1**. |
+| **Dos paquetes NO vienen de CRAN** | `waffle` (de `hrbrmstr/waffle`) y `ggalt` (de `yonicd/ggalt`, archivado de CRAN el 2025-08-02). `renv::restore()` los baja de GitHub solo, pero **requiere conexión a GitHub** — si falla con *error code 56*, es red, no el paquete. |
+| **Mac Intel** | Muchos paquetes compilan desde código fuente porque CRAN ya no publica binarios para esa arquitectura. Puede requerir librerías de sistema vía Homebrew: `gdal`, `proj`, `harfbuzz`, `fribidi`. |
+| **`terra` está pero no se usa** | Residuo de la restauración inicial. Ver la nota en la sección de problemas. |
+
+#### Cómo regenerar este bloque
+
+```r
+sessionInfo()
+```
+
+O solo los paquetes cargados, ordenados:
+
+```r
+sort(sapply(sessionInfo()$otherPkgs, function(p) paste0(p$Package, "_", p$Version)))
+```
+
 ### Problemas encontrados durante `renv::restore()` (Mac Intel)
 
 En la práctica, `renv::restore()` con el lockfile original **no terminó de funcionar**
