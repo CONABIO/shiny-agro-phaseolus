@@ -635,13 +635,33 @@ output$graph4 <- renderGirafe({
 
       # Todas las especies conservan color y entrada en la leyenda, incluidas las
       # raras: son las que redondean a 0% y no alcanzan a ocupar ni un cuadro del
-      # waffle. En vez de desaparecerlas se dibujan aparte, en una fila propia
-      # debajo de la rejilla, para no distorsionar las proporciones.
+      # waffle.
       TTabla1$Especie <- factor(TTabla1$Especie, levels = TTabla1$Especie)
+      # paleta NOMBRADA por especie: el cuadro multicolor la consulta por nombre,
+      # no por posición, así que no se desfasa al reacomodar la rejilla
       mypalette <- colores_waffle(input$paleta_waffle, nrow(TTabla1))
+      names(mypalette) <- levels(TTabla1$Especie)
 
       comunes <- TTabla1[TTabla1$val1 > 0, ]
       raras   <- TTabla1[TTabla1$val1 == 0, ]
+
+      # Las especies que no alcanzan un cuadro propio no desaparecen: se juntan en un
+      # solo cuadro MULTICOLOR dentro de la rejilla, dividido en una franja por especie.
+      # Así siguen siendo parte visible del 100%, que era la crítica al diseño anterior
+      # (si son parte del universo de frijoles, deberían verse en la figura).
+      #
+      # Para hacerle lugar se le quita un cuadro a la especie más pequeña de la rejilla.
+      # Si con eso se queda en cero, esa especie baja también al grupo del multicolor:
+      # tiene menos de 1% real, así que pertenece más a ese grupo que al resto.
+      excluidas <- raras
+      if (nrow(raras) > 0) {
+        u <- nrow(comunes)
+        comunes$val1[u] <- comunes$val1[u] - 1
+        if (comunes$val1[u] == 0) {
+          excluidas <- rbind(comunes[u, ], raras)
+          comunes   <- comunes[-u, ]
+        }
+      }
 
       # El waffle se arma a mano en vez de usar waffle(): esa función genera sus
       # propios geoms internos, que no son interactivos. Reconstruir la rejilla
@@ -659,30 +679,69 @@ output$graph4 <- renderGirafe({
                            comunes$val1[match(celdas$Especie, comunes$Especie)],
                            "% de los registros")
 
-      # Fila aparte para las especies raras, separada de la rejilla por un hueco
+      # El cuadro multicolor va en la celda que quedó libre, la siguiente de la rejilla.
+      # Se arma con un geom_rect por especie, todos dentro del mismo cuadro; encima se
+      # dibuja un marco blanco para que se vea del mismo tamaño que los demás.
+      # inherit.aes = FALSE es IMPRESCINDIBLE: sin él hereda el aes(x = columna) global
+      # y falla porque estos datos no tienen esa columna.
+      capa_multicolor <- NULL
+      if (nrow(excluidas) > 0) {
+        k  <- nrow(celdas)
+        cx <- k %/% FILAS
+        cy <- k %%  FILAS
+        ne <- nrow(excluidas)
+        tip_multi <- paste0("Todas juntas: ",
+                            sprintf("%.1f", sum(excluidas$pct_real)),
+                            "% de los registros\n",
+                            paste(abreviar_especie(excluidas$Especie), collapse = ", "))
+        franjas <- data.frame(
+          xmin    = cx - 0.45 + (0:(ne - 1)) * (0.9 / ne),
+          xmax    = cx - 0.45 + (1:ne)       * (0.9 / ne),
+          ymin    = cy - 0.45,
+          ymax    = cy + 0.45,
+          Especie = excluidas$Especie,
+          tip     = tip_multi
+        )
+        capa_multicolor <- list(
+          geom_rect_interactive(
+            data = franjas,
+            aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax,
+                fill = Especie, tooltip = tip, data_id = Especie),
+            colour = NA, inherit.aes = FALSE),
+          annotate("rect", xmin = cx - 0.45, xmax = cx + 0.45,
+                   ymin = cy - 0.45, ymax = cy + 0.45,
+                   fill = NA, colour = "white", linewidth = 0.8)
+        )
+      }
+
+      # Fila aparte, debajo de la rejilla, con cada una de las especies del multicolor
+      # por separado, para poder verlas y consultarlas una por una
       FILA_RARAS <- -2.2
-      if (nrow(raras) > 0) {
+      if (nrow(excluidas) > 0) {
         celdas_raras <- data.frame(
-          Especie = raras$Especie,
+          Especie = excluidas$Especie,
           fila    = FILA_RARAS,
-          columna = seq_len(nrow(raras)) - 1,
-          tip     = paste0(raras$Especie, "\nmenos del 1% de los registros (",
-                           sprintf("%.2f", raras$pct_real), "%)")
+          columna = seq_len(nrow(excluidas)) - 1,
+          tip     = paste0(excluidas$Especie, "\nmenos del 1% de los registros (",
+                           sprintf("%.2f", excluidas$pct_real), "%)")
         )
         celdas <- rbind(celdas, celdas_raras)
       }
 
-      # Nota al pie con los nombres de las especies que no alcanzan el 1%
-      nota_raras <- if (nrow(raras) > 0) {
-        paste0("Especies presentes que no alcanzan el 1% de los registros y por eso no ",
-               "ocupan ningún cuadro (se muestran en la fila inferior):\n",
-               paste(abreviar_especie(raras$Especie), collapse = ", "), ".")
+      # Nota al pie que explica el cuadro multicolor
+      nota_raras <- if (nrow(excluidas) > 0) {
+        paste0("El cuadro multicolor de la rejilla representa en conjunto a las especies ",
+               "que no alcanzan un cuadro propio (",
+               sprintf("%.1f", sum(excluidas$pct_real)),
+               "% de los registros), y abajo se muestran una por una:\n",
+               paste(abreviar_especie(excluidas$Especie), collapse = ", "), ".")
       } else NULL
 
       dos <- ggplot(celdas, aes(x = columna, y = fila)) +
         geom_tile_interactive(
           aes(fill = Especie, data_id = Especie, tooltip = tip),
           colour = "white", linewidth = 0.8, width = 0.9, height = 0.9) +
+        capa_multicolor +
         # labels solo abrevia lo que se ve en la leyenda; el valor del factor sigue
         # siendo el nombre completo, así que data_id y tooltip no se alteran
         scale_fill_manual(values = mypalette, name = "Especies", drop = FALSE,
