@@ -261,7 +261,10 @@ output$graph4 <- renderGirafe({
       opts_hover_inv(css = "opacity:0.35;"),
       opts_tooltip(css = "background-color:#333; color:#fff; padding:5px;
                           border-radius:4px; font-size:12px;"),
-      opts_toolbar(saveaspng = FALSE),
+      # hidden = "selection" quita los dos botones de lazo, que no se usan.
+      # Se conservan el zoom, la descarga en PNG y la pantalla completa.
+      opts_toolbar(saveaspng = TRUE, pngname = "floracion_fructificacion",
+                   hidden = "selection"),
       opts_sizing(rescale = TRUE)
     )
   )
@@ -482,7 +485,10 @@ output$graph4 <- renderGirafe({
           opts_hover_inv(css = "opacity:0.30;"),
           opts_tooltip(css = "background-color:#333; color:#fff; padding:5px;
                               border-radius:4px; font-size:12px;"),
-          opts_toolbar(saveaspng = FALSE),
+          # hidden = "selection" quita los dos botones de lazo, que no se usan.
+          # Se conservan el zoom, la descarga en PNG y la pantalla completa.
+          opts_toolbar(saveaspng = TRUE, pngname = "altitud_global",
+                       hidden = "selection"),
           opts_sizing(rescale = TRUE)
         )
       )
@@ -599,7 +605,10 @@ output$graph4 <- renderGirafe({
           opts_hover_inv(css = "opacity:0.25;"),
           opts_tooltip(css = "background-color:#333; color:#fff; padding:5px;
                               border-radius:4px; font-size:12px;"),
-          opts_toolbar(saveaspng = FALSE),
+          # hidden = "selection" quita los dos botones de lazo, que no se usan.
+          # Se conservan el zoom, la descarga en PNG y la pantalla completa.
+          opts_toolbar(saveaspng = TRUE, pngname = "altitud_por_especie",
+                       hidden = "selection"),
           opts_sizing(rescale = TRUE)
         )
       )
@@ -777,7 +786,10 @@ output$graph4 <- renderGirafe({
           opts_hover_inv(css = "opacity:0.30;"),
           opts_tooltip(css = "background-color:#333; color:#fff; padding:5px;
                               border-radius:4px; font-size:12px;"),
-          opts_toolbar(saveaspng = FALSE),
+          # hidden = "selection" quita los dos botones de lazo, que no se usan.
+          # Se conservan el zoom, la descarga en PNG y la pantalla completa.
+          opts_toolbar(saveaspng = TRUE, pngname = "proporcion_por_estado",
+                       hidden = "selection"),
           opts_sizing(rescale = TRUE)
         )
       )
