@@ -10,6 +10,10 @@ Rplots.pdf
 # Guia de trabajo personal, no forma parte del proyecto
 skill_distribucion_correccion.md
 
+# Borrador del bug report enviado a ggiraph por el modal de pantalla completa.
+# La correccion vive en www/styles.css; esto era solo el texto para GitHub.
+issue.md
+
 # Catalogo de localidades de INEGI (AGEEML, ~53 MB, 296,658 filas). Se uso una
 # sola vez para verificar la altitud de las 32 capitales, que quedaron escritas
 # en global.R (capitales_altitud, con su CVEGEO). La app NO lo necesita para
