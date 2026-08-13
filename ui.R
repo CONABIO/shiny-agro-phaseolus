@@ -42,15 +42,15 @@ dashboardPage(
       #shinyjs::useShinyjs(),
       menuItem("Introducción", tabName = "home", icon = icon("home")),
       menuItem("Distribución", tabName = "widgets", icon = icon("map")),
+      # Las dos vistas de altitud van agrupadas bajo un solo título. El menuItem padre
+      # NO lleva tabName: si lo llevara competiría con sus hijos por la selección.
+      # startExpanded = TRUE deja las dos opciones a la vista desde el arranque.
       menuItem(
         "Altitud",
-        tabName = "widgets1",
-        icon = icon("certificate")
-      ),
-      menuItem(
-        "Altitud por especie",
-        tabName = "altitud_especie",
-        icon = icon("chart-line")
+        icon = icon("certificate"),
+        startExpanded = TRUE,
+        menuSubItem("Altitud global", tabName = "widgets1"),
+        menuSubItem("Altitud por especie", tabName = "altitud_especie")
       ),
       menuItem(
         "Floración y fructificación",
