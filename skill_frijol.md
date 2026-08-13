@@ -212,6 +212,26 @@ que se generó el lockfile. Bitácora de cada bloqueo y su solución:
    renv::install("terra")   # instaló 1.9-34, sí compila
    ```
 
+   > **`terra` ya no se usa, y se dejó a propósito.** Verificado el 13 de agosto de
+   > 2026: no se carga ni se menciona en `server.R`, `ui.R` ni `global.R`, y **ningún
+   > paquete instalado depende de él** — ni en `Depends`, ni en `Imports`, ni siquiera
+   > en `Suggests`.
+   >
+   > Quedó registrado en `renv.lock` porque se instaló a mano para desatorar la cadena
+   > de restauración, y `renv::snapshot()` en su modo por defecto (*implicit*) **anota
+   > lo que encuentra instalado**, no solo lo que el código realmente pide. Es la
+   > contrapartida de que sea cómodo.
+   >
+   > Se puede quitar con `renv::remove("terra")` seguido de `renv::snapshot()`, pero se
+   > decidió **no tocarlo antes del PR**: son 185 paquetes en el lockfile y uno de sobra
+   > no hace daño, mientras que mover dependencias justo antes de una revisión sí
+   > agrega riesgo. Si algún día se hace, la verificación es correr `shiny::runApp()`
+   > después — si algo lo necesitara, fallaría al arrancar.
+   >
+   > Y si `snapshot()` propone quitar **otros** paquetes además de terra, hay que leer
+   > la lista antes de aceptar: puede haber más residuos de estos días, pero también
+   > podría llevarse algo que sí se use y solo esté cargado indirectamente.
+
 3. **Conflictos de librerías de Homebrew en cascada** (`jpeg-xl`, luego `abseil`/`re2`)
    al intentar compilar `terra`/GDAL — típico de fórmulas de Homebrew desincronizadas
    entre sí.
