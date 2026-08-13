@@ -44,6 +44,7 @@ h1, h2, h3, h4, h5, h6,
   margin-bottom: 16px;
 }
 
+
 .contenido-frijol h1,
 .contenido-frijol h2,
 .contenido-frijol h3,
@@ -57,7 +58,11 @@ h1, h2, h3, h4, h5, h6,
   font-size: 36.8px;
   line-height: 1.2;
   margin-top: 10px;
-  margin-bottom: 8px;
+  /* 22px y no 8: el párrafo lleva margin-top 0, así que este margen es TODO el aire
+     que separa al título del texto. Se mantiene por encima de los 16px que separan
+     un párrafo de otro, para que el título se lea como encabezado, pero sin abrir
+     un hueco tan grande como los 32px que se probaron antes. */
+  margin-bottom: 22px;
 }
 
 .contenido-frijol h2,
