@@ -27,10 +27,13 @@ apt_install \
 install2.r --error --skipinstalled -n "$NCPUS" \
     ash \
     colorspace \
+    datamods \
     DT \
     RColorBrewer \
     ggmap \
     ggthemes \
+    ggiraph \
+    ggrepel \
     gridExtra \
     extrafont \
     igraph \
@@ -45,10 +48,12 @@ install2.r --error --skipinstalled -n "$NCPUS" \
     shinydashboard \
     shinydashboardPlus \
     shinyjs \
+    shinyWidgets \
     sp \
     tableHTML \
     tidyverse \
-    vegan
+    vegan \
+    wesanderson
 
 install2.r --error --skipinstalled -r NULL -t "source" "https://cran.r-project.org/src/contrib/Archive/ggalt/ggalt_0.4.0.tar.gz"
 
@@ -85,3 +90,10 @@ echo -e "Check the waffle package...\n"
 R -q -e "library(waffle)"
 
 echo -e "\nInstall waffle package, done!"
+
+# Check the waffle version
+echo -e "Check the datamods package...\n"
+
+R -q -e "library(datamods)"
+
+echo -e "\nInstall datamods package, done!"
