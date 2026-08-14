@@ -1,7 +1,31 @@
 .Rproj.user
 .Rhistory
 .RData
-.Rprofile
 .Ruserdata
 .DS_Store
-renv
+Rplots.pdf
+
+# .Rprofile y renv/activate.R SI se versionan: son los que hacen que renv se active
+# solo al abrir el proyecto. Sin ellos, quien clone el repo correria la app con los
+# paquetes de su biblioteca global en vez de los del lockfile, sin darse cuenta.
+# La biblioteca en si (renv/library, 9.2 MB) queda fuera por el .gitignore que el
+# propio renv mantiene dentro de esa carpeta.
+
+# Guia de trabajo personal, no forma parte del proyecto
+skill_distribucion_correccion.md
+
+# HTML generado al renderizar la bitacora desde RStudio. Es un derivado del .md,
+# que si se versiona; no tiene caso guardar los dos.
+skill_frijol.html
+
+# Borrador del bug report enviado a ggiraph por el modal de pantalla completa.
+# La correccion vive en www/styles.css; esto era solo el texto para GitHub.
+issue.md
+
+# Catalogo de localidades de INEGI (AGEEML, ~53 MB, 296,658 filas). Se uso una
+# sola vez para verificar la altitud de las 32 capitales, que quedaron escritas
+# en global.R (capitales_altitud, con su CVEGEO). La app NO lo necesita para
+# correr; se conserva localmente por si hay que volver a consultarlo.
+data/AGEEML_*.csv
+data/AGEEML_*.xlsx
+data/AGEEML_*.txt
