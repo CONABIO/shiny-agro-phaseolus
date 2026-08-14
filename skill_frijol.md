@@ -125,18 +125,6 @@ de su membresía en la organización.
 - `Dockerfile`, `docker-compose.yml`
 - `conabio_frijol.Rproj`
 
-## Permisos en GitHub
-
-- Verificación de permisos con:
-  ```bash
-  gh api repos/CONABIO/shiny-agro-phaseolus --jq '.permissions'
-  ```
-- Estado inicial: `pull: true`, `push: false` → sin acceso de escritura.
-- Se envió correo solicitando acceso de colaborador a los contribuidores del repo
-  (`stkaren92`, `jmbarrios`), pendiente de confirmación.
-- Mientras no haya `push: true`, se puede seguir trabajando localmente sin problema
-  (clonar, editar, hacer commits locales) — el permiso solo se necesita al momento de
-  hacer `git push`.
 
 ## Flujo de trabajo con Git (branches)
 
@@ -239,7 +227,7 @@ loaded via a namespace (and not attached): 81 paquetes más
 | **R ≥ 4.4** | Obligatorio. Con 4.3 o menos, `Matrix` no instala y se cae toda la cadena. El lockfile fija **4.5.1**. |
 | **Dos paquetes NO vienen de CRAN** | `waffle` (de `hrbrmstr/waffle`) y `ggalt` (de `yonicd/ggalt`, archivado de CRAN el 2025-08-02). `renv::restore()` los baja de GitHub solo, pero **requiere conexión a GitHub** — si falla con *error code 56*, es red, no el paquete. |
 | **Mac Intel** | Muchos paquetes compilan desde código fuente porque CRAN ya no publica binarios para esa arquitectura. Puede requerir librerías de sistema vía Homebrew: `gdal`, `proj`, `harfbuzz`, `fribidi`. |
-| **`terra` está pero no se usa** | Residuo de la restauración inicial. Ver la nota en la sección de problemas. |
+| **Dos paquetes están pero no se usan** | `terra` (residuo de la restauración inicial) y `waffle` (quedó huérfano al reconstruir la gráfica a mano para hacerla interactiva). Se dejaron a propósito; ver las notas en la sección de problemas. |
 
 #### Cómo regenerar este bloque
 
@@ -353,6 +341,25 @@ reintentando `renv::install("hrbrmstr/waffle")` (el error de red anterior result
 pasajero) y volviendo a correr `renv::snapshot()` — ahora `waffle` queda registrado
 correctamente como fuente de GitHub (`hrbrmstr/waffle`), reproducible para cualquiera.
 
+> **`waffle` ya no se usa, y se dejó a propósito.** Verificado el 13 de agosto de 2026:
+> de las **16 funciones que exporta el paquete no se usa ninguna**. Las dos coincidencias
+> que aparecen en el código son falsos positivos — `colores_waffle()` es una función
+> propia definida en `global.R`, y el otro `waffle(` está dentro de un comentario.
+>
+> Quedó huérfano al hacer la gráfica interactiva: los geoms internos de `waffle()` no
+> aceptan `data_id` ni `tooltip`, así que la rejilla se reconstruyó a mano con
+> `geom_tile_interactive`. Desde entonces el paquete sobra.
+>
+> **A diferencia de `terra`, este sí tiene un `library(waffle)`** en `server.R`, así que
+> se carga en cada arranque de la app aunque no se ocupe. Y es de los que vienen de
+> GitHub, o sea de los que más fricción dan al restaurar en otra máquina: quitarlo
+> simplificaría la instalación para quien clone el repo.
+>
+> Se limpiaría con `renv::remove("waffle")`, borrando el `library(waffle)` de `server.R`
+> y corriendo `renv::snapshot()`. Se decidió **no hacerlo antes del PR**, por el mismo
+> criterio que con `terra`: mover dependencias justo antes de una revisión agrega riesgo
+> sin ganar nada urgente.
+
 ## Cambios hechos en la app (rama `frijol-cambios`)
 
 1. **Ocultar pestaña "Autores"** — [ui.R:46](ui.R#L46)
@@ -464,57 +471,6 @@ del otro. Ya pasó una vez con el renombre de "Waffle" — se resolvió reaplica
 cambio sobre la versión más reciente del archivo. **Recomendación:** si el usuario va a
 editar el archivo a mano, guardar esos cambios antes de pedir un cambio nuevo, para no
 pisarnos el trabajo.
-
-## Próximos pasos
-
-- [x] Confirmar que la app corre localmente (`shiny::runApp()`)
-- [x] Correr `renv::snapshot()` para actualizar el lockfile con el entorno que sí funciona
-- [x] Ocultar pestaña de Autores
-- [x] Reemplazar introducción con el nuevo texto y estilos
-- [x] Hacer que las ligas abran en pestaña nueva
-- [x] Igualar el tamaño de las cajas de Visualización
-- [x] Renombrar la gráfica de waffle
-- [x] Corregir selectores encimados sobre las gráficas (Altitud, Floración, Waffle)
-- [x] Dar más espacio entre renglones en las gráficas de Altitud y Floración
-- [x] Mostrar la gráfica completa siempre (sin recorte ni scroll interno)
-- [x] Insertar imagen `cartel_frijoles.png` centrada en la introducción
-      (el `<div>` que la envuelve lleva `margin: 2rem 0 2.75rem` — sin eso el párrafo
-      siguiente queda pegado a la imagen, porque el margen del `<p>` no se aplica
-      contra un `<div>` hermano)
-- [x] Reemplazar el texto "Frijol" del cintillo superior por el logo de CONABIO
-- [x] Centrar la frase "Cada pueblo de México tiene su frijol" en el cintillo
-      superior. Historial de intentos:
-      1. `position: absolute` con `left: 200px` dentro de `.main-header` — quedó
-         pegado arriba a la derecha (el `<nav>` interno ya trae
-         `margin-left: 200px` por el `titleWidth` de
-         `shinydashboard::dashboardHeader()`, el offset manual sobraba).
-      2. `left: 0; right: 0` dentro de `.main-header .navbar { position: relative; }`
-         — con font-size 36.8px el texto se desbordó fuera de la pantalla, señal de
-         que `.navbar` no tenía el ancho esperado (floats internos de AdminLTE o
-         especificidad CSS de Bootstrap ganándole a la regla).
-      3. **Solución que funcionó:** `position: fixed` (relativo a la ventana del
-         navegador, no a un ancestro dentro del header) con
-         `left: 200px; right: 0; height: 50px;` — evita depender por completo de la
-         estructura/anchos internos de AdminLTE. Confirmado visualmente con captura
-         de pantalla en sesión de pruebas: quedó centrada y en una sola línea a
-         36.8px (Oswald 600, igual al `h1` de la introducción).
-- [x] Logo distinto cuando se minimiza el sidebar — patrón ya usado por el usuario en
-  otro proyecto CONABIO: `title` del `dashboardHeader` es un `tagList()` con dos
-  imágenes — la de sidebar expandido envuelta en `span(class = "logo-lg", ...)`
-  (`conabio_logo1.png`) y una segunda sin envolver que AdminLTE muestra cuando el
-  sidebar está colapsado (`CONABIO_LOGO_15.png`, ya provista por el usuario en `www/`).
-- [x] Refactor de filtros del mapa de Distribución con `shinyWidgets::selectizeGroupServer`
-- [ ] Confirmar acceso de escritura al repo (`push: true`) vía correo enviado
-- [ ] Decidir si el `renv.lock` actualizado se incluye en el PR de `frijol-cambios`,
-  ya que arregla un problema real de reproducibilidad en Mac (beneficiaría a
-  cualquiera que clone el repo en una Mac Intel moderna)
-- [x] Panel de filtros del mapa (Condición/Estado/Especie): apilar hacia abajo en vez
-  de desbordar, achicar altura de cada caja, y achicar el ancho a la mitad del panel
-- [x] Cambiar capas base del leaflet a `providers$CartoDB.Positron` ("Mapa") y
-  `providers$Esri.WorldImagery` ("Foto aérea"), patrón tomado de otro proyecto del
-  usuario
-- [x] Panel de filtros de Distribución: mover de lado izquierdo a lado derecho, pegado
-  al borde (`absolutePanel`: `left = 220` → `right = 10`; ancho final `width = 150`)
 
 ## Ajustes de estilo al panel de filtros de Distribución (`#controls`)
 
@@ -788,83 +744,24 @@ se aplicó a la ladera principal. Vale tenerlo presente si alguien pregunta.
   completa). Acorta ~9 caracteres cada nombre y despeja mucho la gráfica.
 - Sin líneas de mínimo/máximo: se simplificó a decisión del usuario.
 
-### Colocación de los nombres: cuatro intentos hasta dar con la buena
+### Colocación de los nombres: ggrepel
 
-Esta parte costó varias vueltas. Queda documentado el porqué de cada descarte para no
-repetirlas:
-
-1. **Rotados 90°, alineados todos a una misma altura**, con hilo gris al rango min–máx.
-   Ordenado, pero el usuario prefirió que cada nombre siguiera a su propio punto.
-2. **Rotados 90°, cada uno pegado a su punto.** Funcionaba y no chocaban (cada nombre
-   en su carril vertical), pero se leen girando la cabeza.
-3. **Rotados 45°.** Descartado: con ~59 especies cada etiqueta barre en diagonal varios
-   carriles y quedan **ilegibles** (verificado en pantalla). 45° solo tendría sentido con
-   muy pocas especies.
-4. **Horizontales atados a su propio valor + escalón acumulado** (200 m de despegue,
-   20 m por orden). Descartado: al atarlos a la altitud real quedan **encimados donde
-   los datos se amontonan y separadísimos donde saltan**, y para respetar la separación
-   mínima la gráfica se disparaba a ~2800 px de alto.
-
-5. **Horizontales repartidos de forma pareja** dentro de la banda de los datos
-   (`seq(min, max, length.out = n)`). Garantizaba cero encimamientos y altura
-   razonable, pero el usuario lo descartó: prefiere que cada nombre esté atado a su
-   propio valor aunque algunos se encinen.
-
-**Estado actual — horizontales, atados a su propio valor:**
-```r
-DESPEGUE <- 80   # metros que el nombre se levanta sobre su propio valor
-y_nombres <- function(LL, alto_px) LL$ordenar + DESPEGUE
-```
-Simple y directo: cada nombre queda `DESPEGUE` metros encima de su punto, con un hilo
-gris tenue conectándolos. Se probaron 1000 → 200 → 40 → 80 m.
-
-**Los nombres se alternan izquierda / derecha** — idea del usuario, y resultó ser **la
-solución al encimamiento**: los nombres que chocan son siempre vecinos en el orden, así
-que al mandarlos a lados opuestos dejan de compartir el mismo espacio horizontal.
-```r
-LL$lado     <- ifelse(LL$pos %% 2 == 1, -1, 1)
-LL$x_nombre <- LL$pos + LL$lado * 0.4
-LL$h        <- ifelse(LL$lado < 0, 1, 0)   # hjust: 1 termina en el punto, 0 arranca
-geom_text(aes(x = x_nombre, y = y_nombre, label = etiqueta, hjust = h), ...)
-```
-(`hjust` funciona como aesthetic en ggplot2, así que puede variar por fila.)
-
-Antes de alternar se probó mandarlos **todos a la izquierda**
-(`hjust = 1, nudge_x = -0.35`), también idea del usuario, para **quitar la franja en
-blanco que quedaba a la derecha**: como la montaña sube hacia la derecha, el espacio
-vacío está arriba a la izquierda y los nombres lo aprovechan. Eso resolvió el hueco
-(antes salían a la derecha con `expansion(mult = c(0.01, 0.35))`, y ese 35% se veía
-como espacio muerto). Con el alternado, el aire va parejo a los dos lados:
-`expansion(mult = c(0.13, 0.13))`.
-
-**Línea que une el punto con su nombre:** punteada y más marcada, para que se siga bien
-—`colour = "grey45", linewidth = 0.4, linetype = "dashed"` (antes era gris muy tenue y
-continua, casi no se veía).
-
-Altura de la gráfica: `max(650, n * 15 + 130)`, ~15 px por especie.
-
-**Nota:** se llegó a implementar a mano un algoritmo de descolisión (empujar hacia arriba
-solo los nombres que chocaban, y solo lo mínimo) pero se quitó. Al final lo resolvió
-`ggrepel`, ver abajo.
-
-### Solución final al encimamiento: ggrepel
-
-Aun con el alternado izquierda/derecha quedaban nombres encimados. Lo resolvió
-**`ggrepel`** (0.9.8), que no es jitter (ruido al azar) sino que *empuja* activamente las
-etiquetas hasta que dejan de tocarse.
+Con 59 especies los nombres se encimaban. Lo resolvió **`ggrepel`** (0.9.8), que no es
+jitter (ruido al azar) sino que *empuja* activamente las etiquetas hasta que dejan de
+tocarse.
 
 **Clave: `ggiraph` trae `geom_text_repel_interactive()`**, así que no hubo que elegir
 entre etiquetas legibles y hover — se conservan las dos cosas.
 
-Cambios que trajo:
-- `geom_text_interactive` → `geom_text_repel_interactive`, anclado directamente en el
-  punto (`x = pos, y = ordenar`) en vez de en una posición calculada a mano.
-- **Se quitó la `geom_segment_interactive` manual**: ahora repel dibuja su propia línea
-  guía (`segment.linetype = "dashed"`). Es necesario, porque si repel mueve la etiqueta,
-  una línea fija se quedaría apuntando al vacío.
-- El alternado izquierda/derecha se conserva pero como **sesgo** (`nudge_x = lado * 0.6`)
-  en vez de posición fija: repel decide el lugar final.
-- Se limpió el código muerto que quedó: `x_nombre`, `h` y la función `y_nombres()`.
+Cómo queda armado:
+- `geom_text_repel_interactive` anclado directamente en el punto
+  (`x = pos, y = ordenar`), no en una posición calculada a mano.
+- **Sin `geom_segment_interactive` manual**: repel dibuja su propia línea guía
+  (`segment.linetype = "dashed"`). Es necesario, porque si repel mueve la etiqueta, una
+  línea fija se quedaría apuntando al vacío.
+- Los nombres se alternan izquierda/derecha, pero como **sesgo**
+  (`nudge_x = lado * 0.6`), no como posición fija: repel decide el lugar final.
+- `nudge_y = DESPEGUE` (200 m) los levanta sobre su propio punto.
 
 ⚠️ **`max.overlaps = Inf` es imprescindible.** Por defecto ggrepel vale 10 y **descarta
 etiquetas en silencio** cuando no encuentra dónde ponerlas — con 59 especies se habrían
