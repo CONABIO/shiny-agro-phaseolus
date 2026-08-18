@@ -33,3 +33,7 @@ data/AGEEML_*.txt
 # Archivos de bloqueo que crea Excel mientras tiene abierto un libro (~$libro.xlsx).
 # Son temporales de la sesion de Excel, no contenido del proyecto.
 ~$*
+
+# Archivo de trabajo local. La app no lo lee (verificado: sin referencias en
+# global.R, ui.R ni server.R), asi que no hace falta versionarlo.
+especies_oswald.xlsx
