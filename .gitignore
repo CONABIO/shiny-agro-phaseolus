@@ -29,3 +29,7 @@ issue.md
 data/AGEEML_*.csv
 data/AGEEML_*.xlsx
 data/AGEEML_*.txt
+
+# Archivos de bloqueo que crea Excel mientras tiene abierto un libro (~$libro.xlsx).
+# Son temporales de la sesion de Excel, no contenido del proyecto.
+~$*
