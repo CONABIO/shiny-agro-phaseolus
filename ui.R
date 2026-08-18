@@ -449,14 +449,29 @@ dashboardPage(
               selected = c("Oaxaca"),
               width = 200
             ),
-            # Paleta de colores: cada opción encadena varias paletas de wesanderson
-            # para tener suficientes matices distintos (ver combos_waffle en global.R)
+            # Qué representa el color de los cuadros. La rejilla es la misma en ambos
+            # modos (un cuadro = 1% de los registros, especies ordenadas de mayor a
+            # menor), solo cambia qué distingue el color.
             selectInput(
-              inputId = "paleta_waffle",
-              label = h6(strong("Paleta de colores:")),
-              choices = nombres_combos,
-              selected = nombres_combos[1],
+              inputId = "color_waffle",
+              label = h6(strong("Colorear por:")),
+              choices = c("Especie", "Domesticadas y silvestres"),
+              selected = "Especie",
               width = 200
+            ),
+            # Paleta de colores: cada opción encadena varias paletas de wesanderson
+            # para tener suficientes matices distintos (ver combos_waffle en global.R).
+            # Solo aplica al colorear por especie — en el modo de dos grupos los colores
+            # son fijos, así que el selector se oculta en vez de quedar sin efecto.
+            conditionalPanel(
+              condition = "input.color_waffle == 'Especie'",
+              selectInput(
+                inputId = "paleta_waffle",
+                label = h6(strong("Paleta de colores:")),
+                choices = nombres_combos,
+                selected = nombres_combos[1],
+                width = 200
+              )
             )
           ),
           column(

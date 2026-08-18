@@ -651,6 +651,11 @@ output$graph4 <- renderGirafe({
       mypalette <- colores_waffle(input$paleta_waffle, nrow(TTabla1))
       names(mypalette) <- levels(TTabla1$Especie)
 
+      # Modo de color. La rejilla NO cambia entre modos: se sigue armando por especie
+      # y en el mismo orden, así que al cambiar el selector la figura se recolorea sin
+      # reacomodarse y las dos vistas son comparables cuadro por cuadro.
+      por_especie <- !identical(input$color_waffle, "Domesticadas y silvestres")
+
       comunes <- TTabla1[TTabla1$val1 > 0, ]
       raras   <- TTabla1[TTabla1$val1 == 0, ]
 
@@ -711,11 +716,15 @@ output$graph4 <- renderGirafe({
           Especie = excluidas$Especie,
           tip     = tip_multi
         )
+        # data_id sigue siendo la especie en ambos modos, así que pasar el mouse por
+        # una franja resalta esa especie y su cuadro de la fila de abajo
+        franjas$relleno <- if (por_especie) franjas$Especie
+                           else grupo_domesticacion(franjas$Especie)
         capa_multicolor <- list(
           geom_rect_interactive(
             data = franjas,
             aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax,
-                fill = Especie, tooltip = tip, data_id = Especie),
+                fill = relleno, tooltip = tip, data_id = Especie),
             colour = NA, inherit.aes = FALSE),
           annotate("rect", xmin = cx - 0.45, xmax = cx + 0.45,
                    ymin = cy - 0.45, ymax = cy + 0.45,
@@ -737,24 +746,55 @@ output$graph4 <- renderGirafe({
         celdas <- rbind(celdas, celdas_raras)
       }
 
-      # Nota al pie que explica el cuadro multicolor
+      # Nota al pie que explica el cuadro multicolor.
+      # Al colorear por condición ese cuadro deja de ser multicolor —sus franjas se
+      # pintan con solo dos colores y suele verse casi sólido—, así que se le nombra
+      # por su posición en vez de por su aspecto.
+      #
+      # El texto se parte a un ancho fijo en vez de dejarlo en dos renglones largos.
+      # Medido en el navegador: la nota se salía del contenedor y se cortaba —15 px al
+      # colorear por especie y 96 px por condición—. La causa es coord_equal(): fija el
+      # ancho del panel, así que el espacio sobrante recentra la figura y la recorre a
+      # la derecha, y cuánto se recorre depende de qué tan ancha sea la leyenda (varía
+      # con el número de especies del estado y con el modo de color). Envolver el texto
+      # lo resuelve para todos los casos sin depender de ese ancho.
+      ANCHO_NOTA <- 100   # caracteres
       nota_raras <- if (nrow(excluidas) > 0) {
-        paste0("El cuadro multicolor de la rejilla representa en conjunto a las especies ",
-               "que no alcanzan un cuadro propio (",
-               sprintf("%.1f", sum(excluidas$pct_real)),
-               "% de los registros), y abajo se muestran una por una:\n",
-               paste(abreviar_especie(excluidas$Especie), collapse = ", "), ".")
+        partes <- c(
+          paste0("El ", if (por_especie) "cuadro multicolor" else "último cuadro",
+                 " de la rejilla representa en conjunto a las especies ",
+                 "que no alcanzan un cuadro propio (",
+                 sprintf("%.1f", sum(excluidas$pct_real)),
+                 "% de los registros), y abajo se muestran una por una:"),
+          # la lista de especies arranca en renglón propio, por eso se envuelve aparte
+          paste0(paste(abreviar_especie(excluidas$Especie), collapse = ", "), ".")
+        )
+        paste(unlist(lapply(partes, strwrap, width = ANCHO_NOTA)), collapse = "\n")
       } else NULL
 
-      dos <- ggplot(celdas, aes(x = columna, y = fila)) +
-        geom_tile_interactive(
-          aes(fill = Especie, data_id = Especie, tooltip = tip),
-          colour = "white", linewidth = 0.8, width = 0.9, height = 0.9) +
-        capa_multicolor +
+      # El relleno se resuelve al final, ya armada la rejilla (incluida la fila de las
+      # especies del multicolor), para que ambos modos partan exactamente de las mismas
+      # celdas. data_id y tooltip NO cambian: siguen siendo por especie en los dos modos.
+      celdas$relleno <- if (por_especie) celdas$Especie
+                        else grupo_domesticacion(celdas$Especie)
+
+      escala_relleno <- if (por_especie) {
         # labels solo abrevia lo que se ve en la leyenda; el valor del factor sigue
         # siendo el nombre completo, así que data_id y tooltip no se alteran
         scale_fill_manual(values = mypalette, name = "Especies", drop = FALSE,
-                          labels = abreviar_especie) +
+                          labels = abreviar_especie)
+      } else {
+        # drop = FALSE mantiene las dos entradas aunque un estado no tenga domesticadas,
+        # para que la leyenda no cambie de forma al moverse entre estados
+        scale_fill_manual(values = colores_condicion, name = "Condición", drop = FALSE)
+      }
+
+      dos <- ggplot(celdas, aes(x = columna, y = fila)) +
+        geom_tile_interactive(
+          aes(fill = relleno, data_id = Especie, tooltip = tip),
+          colour = "white", linewidth = 0.8, width = 0.9, height = 0.9) +
+        capa_multicolor +
+        escala_relleno +
         coord_equal() +
         labs(title = "Proporción de especies de frijol",
              subtitle = "(Nota: Basado en el número de registros de cada especie por estado)",
@@ -766,7 +806,10 @@ output$graph4 <- renderGirafe({
         guides(fill = guide_legend(nrow = 11,
                                    title.theme = element_text(size = 20))) +
         theme_minimal() +
-        theme(legend.text = element_text(size = 15, face = "italic"),
+        # la cursiva es la convención para nombres científicos, así que solo aplica
+        # cuando la leyenda lista especies
+        theme(legend.text = element_text(size = 15,
+                                         face = if (por_especie) "italic" else "plain"),
               legend.key.size = unit(0.9, "cm"),
               plot.title = element_text(size = 16, face = "bold"),
               plot.subtitle = element_text(color = "#525252"),

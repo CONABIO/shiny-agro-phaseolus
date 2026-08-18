@@ -78,6 +78,23 @@ especies_domesticadas <- c(
   "Phaseolus lunatus var. lunatus"
 )
 
+# Clasifica especies en los dos grupos que usa el waffle al colorear por condición.
+# Es atributo de la ESPECIE, no del registro: no usa la columna Habitat.1
+# (Cultivado/Escapado/Silvestre), que describe cómo se colectó cada ejemplar y no
+# coincide con esto — P. coccineus es especie domesticada pero 865 de sus registros
+# son silvestres. Se eligió el criterio por especie para que el color signifique lo
+# mismo aquí que en la gráfica de Altitud.
+grupo_domesticacion <- function(x) {
+  factor(ifelse(as.character(x) %in% especies_domesticadas,
+                "Domesticadas", "Silvestres"),
+         levels = c("Domesticadas", "Silvestres"))
+}
+
+# Rojo: el mismo con el que Altitud resalta las domesticadas, para que el código de
+# color sea consistente entre pestañas. Azul: contraste alto y distinguible también
+# para daltonismo rojo-verde, el más común.
+colores_condicion <- c("Domesticadas" = "#B40F20", "Silvestres" = "#46ACC8")
+
 # ---------------------------------------------------------------------------
 # Altitud de las capitales de los 32 estados (metros sobre el nivel del mar).
 # Sirven como línea de referencia en la gráfica de Altitud: la gente ubica su
