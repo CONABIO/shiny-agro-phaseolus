@@ -350,6 +350,21 @@ nombres_paletas_mapa <- names(paletas_mapa)
 
 FloFru <- read_xlsx("data/Flor_fruc.xlsx", sheet = "Rdata", col_names = T)
 
+# Arreglo del nombre de las dos variedades. En el Excel, sus dos filas traen el
+# epíteto de la especie en la columna del GÉNERO ("acutifolius acutifolius" en vez de
+# "Phaseolus acutifolius acutifolius"), así que el eje de la gráfica las mostraba sin
+# género — y son justo dos de las cinco especies domesticadas.
+#
+# Se antepone el género en vez de sustituir esa columna: sustituirla daría "Phaseolus
+# acutifolius" y se perdería el epíteto de la variedad, que es lo que las distingue de
+# su contraparte silvestre (var. tenuifolius y var. silvester).
+#
+# Queda sin el "var." de la forma taxonómica completa ("Phaseolus lunatus var.
+# lunatus") porque ese nombre no cabe en el eje; es decisión del autor de la app.
+es_variedad <- FloFru$NombreCategoriaTaxonomica == "variedad"
+FloFru$Nombre_1_Nombre[es_variedad] <- paste("Phaseolus",
+                                             FloFru$Nombre_1_Nombre[es_variedad])
+
 FloFru$Epoca <- as.factor(FloFru$Epoca)
 FloFru$Tipo <- as.factor(FloFru$Tipo)
 
