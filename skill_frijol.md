@@ -107,9 +107,15 @@ es nuevo para él.
 
 Su cuenta de GitHub sigue activa dentro de la organización CONABIO (nunca lo dieron de
 baja — práctica común para que devs puedan cerrar pendientes), por eso pudo clonar el
-repo sin fricción. El permiso de escritura faltante (`push: false`) es específico de
-**este repo** — nunca lo agregaron como colaborador directo aquí, independientemente
+repo sin fricción. El permiso de escritura faltante (`push: false`) era específico de
+**este repo** — no lo habían agregado como colaborador directo aquí, independientemente
 de su membresía en la organización.
+
+> **Ya no aplica: hoy tiene escritura.** Verificado el 18 de agosto de 2026 con
+> `gh api repos/CONABIO/shiny-agro-phaseolus --jq '.permissions'`, que devuelve
+> `push: true` (y `maintain: true`, `admin: false`). Se lo dieron en algún momento entre
+> el PR #1 y esta segunda ronda. Se deja el párrafo de arriba porque explica por qué el
+> PR #1 se trabajó como se trabajó.
 
 ## Setup inicial
 
