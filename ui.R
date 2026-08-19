@@ -397,10 +397,13 @@ dashboardPage(
           column(
             width = 3,
             #Seleccionar la variable para Epoca
+            # "Ambas" dibuja las dos épocas encimadas: cada celda se parte en dos
+            # triángulos y los meses con floración Y fructificación quedan divididos
+            # en diagonal (ver output$graph4 en server.R).
             selectInput(
               inputId = 'Epoca',
               label = h6(strong('Época:')),
-              choices = levels(FloFru$Epoca),
+              choices = c(levels(FloFru$Epoca), AMBAS_EPOCAS),
               selected = "Floración",
               width = 200
             ),
@@ -414,16 +417,49 @@ dashboardPage(
             ),
             # Color de la gráfica — paleta FantasticFox1 (wesanderson).
             # Cada opción se muestra con su propio color de fondo.
-            pickerInput(
-              inputId = 'color_fox',
-              label = h6(strong('Color:')),
-              choices = names(paleta_fox),
-              selected = "Azul",
-              choicesOpt = list(
-                style = paste0("background-color:", unname(paleta_fox),
-                               "; color: white; font-weight: bold;")
+            #
+            # Con una época sola basta un selector; con las dos juntas hacen falta dos
+            # colores, uno por triángulo, así que se cambia un selector por dos. Se
+            # alternan con conditionalPanel en vez de renombrar el mismo control,
+            # porque cada modo conserva así su propia elección al ir y venir.
+            conditionalPanel(
+              condition = sprintf("input.Epoca != '%s'", AMBAS_EPOCAS),
+              pickerInput(
+                inputId = 'color_fox',
+                label = h6(strong('Color:')),
+                choices = names(paleta_fox),
+                selected = "Azul",
+                choicesOpt = list(
+                  style = paste0("background-color:", unname(paleta_fox),
+                                 "; color: white; font-weight: bold;")
+                ),
+                width = 200
+              )
+            ),
+            conditionalPanel(
+              condition = sprintf("input.Epoca == '%s'", AMBAS_EPOCAS),
+              pickerInput(
+                inputId = 'color_flo',
+                label = h6(strong('Color floración:')),
+                choices = names(paleta_fox),
+                selected = unname(colores_epoca_default["Floración"]),
+                choicesOpt = list(
+                  style = paste0("background-color:", unname(paleta_fox),
+                                 "; color: white; font-weight: bold;")
+                ),
+                width = 200
               ),
-              width = 200
+              pickerInput(
+                inputId = 'color_fru',
+                label = h6(strong('Color fructificación:')),
+                choices = names(paleta_fox),
+                selected = unname(colores_epoca_default["Fructificación"]),
+                choicesOpt = list(
+                  style = paste0("background-color:", unname(paleta_fox),
+                                 "; color: white; font-weight: bold;")
+                ),
+                width = 200
+              )
             )
           ),
           column(

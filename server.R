@@ -172,8 +172,10 @@ shinyServer(
     
     #Para las epocas de lluvia y Floración
     points1 <- reactive({
-      #Epoca
-      FloFru <- FloFru[FloFru$Epoca %in% input$Epoca,]
+      #Epoca — "Ambas" no filtra: deja pasar las dos para poder dibujarlas encimadas
+      if (!identical(input$Epoca, AMBAS_EPOCAS)) {
+        FloFru <- FloFru[FloFru$Epoca %in% input$Epoca,]
+      }
       #Tipo
       FloFru <- FloFru[FloFru$Tipo %in% input$Tipo,]
     })
@@ -185,7 +187,9 @@ FloFru1_data <- reactive({
     rename("Categoria" = "NombreCategoriaTaxonomica") %>%
     rename("Genero1" = "Nombre_1_Nombre") %>%
     rename("Especie1" = "Nombre_Nombre") %>%
-    group_by(Genero1, Especie1, Mes) %>%
+    # Epoca entra al agrupamiento para que con "Ambas" las dos no se fundan en un
+    # solo valor por celda. Con una época sola no cambia nada: solo hay un nivel.
+    group_by(Epoca, Genero1, Especie1, Mes) %>%
     summarise(sum(Val)) %>%
     rename(Val = `sum(Val)`) %>%
     unite(Genero1, Especie1, col = "Especie", sep = " ")
@@ -216,41 +220,127 @@ alto_graph4 <- reactive({
   # Los 70 px del margen se midieron en el navegador comparando el alto del SVG contra
   # el alto real de los cuadros: es lo que ocupan el título y los dos ejes de meses,
   # y no cambia con el número de especies.
-  max(150, length(unique(FloFru1_data()$Especie)) * 28 + 70)
+  # Con las dos épocas se suman una leyenda y un subtítulo arriba, que el margen de
+  # 70 px no contemplaba. Sin este extra le robaban alto a los renglones.
+  margen <- if (identical(input$Epoca, AMBAS_EPOCAS)) 70 + 60 else 70
+  max(150, length(unique(FloFru1_data()$Especie)) * 28 + margen)
 })
 
 output$graph4 <- renderGirafe({
 
   FloFru1 <- FloFru1_data()
 
+  ambas <- identical(input$Epoca, AMBAS_EPOCAS)
+
   # El título se arma con los filtros activos, ej.:
   # "Época de floración de los frijoles silvestres"
-  titulo_graph4 <- paste0("Época de ", tolower(input$Epoca),
-                          " de los frijoles ", tolower(input$Tipo))
+  titulo_graph4 <- paste0(
+    "Época de ",
+    if (ambas) "floración y fructificación" else tolower(input$Epoca),
+    " de los frijoles ", tolower(input$Tipo))
 
-  # Color elegido por el usuario (paleta FantasticFox1). El extremo claro del
-  # degradado se deriva aclarando el mismo color, para que combinen.
-  color_alto <- unname(paleta_fox[input$color_fox])
-  color_bajo <- colorspace::lighten(color_alto, 0.85)
-
-  # data_id = Especie hace que al pasar el mouse por cualquier mes de una especie
-  # se resalte su renglón completo, y el resto se atenúe.
-  p <- ggplot(FloFru1, aes(Mes, Especie)) +
-    geom_tile_interactive(
-      aes(fill = Val, data_id = Especie,
-          tooltip = paste0(Especie, "\n", Mes)),
-      colour = "white") +
-    scale_fill_gradient(low = color_bajo, high = color_alto) +
-    # duplica el eje de los meses para que aparezcan arriba y abajo
-    scale_x_discrete(sec.axis = dup_axis()) +
-    labs(title = titulo_graph4,
-         x = NULL, y = NULL) +
-    theme_minimal() +
+  # Tema y ejes son iguales en los dos modos; lo único que cambia es cómo se pinta
+  # cada celda, así que se definen una sola vez.
+  tema_graph4 <- list(
+    labs(title = titulo_graph4, x = NULL, y = NULL),
+    theme_minimal(),
     theme(panel.border = element_blank(),
+          panel.grid = element_blank(),
           plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+          plot.subtitle = element_text(size = 12, colour = "#525252", hjust = 0.5),
           axis.text.y = element_text(size = 12, face = "italic"),
           axis.text.x = element_text(angle = 0, size = 12, hjust = 0.5, vjust = 0.5),
-          legend.position = "")
+          legend.position = if (ambas) "top" else "",
+          legend.title = element_blank(),
+          legend.text = element_text(size = 13)))
+
+  if (!ambas) {
+    # ---- Una sola época: la vista de siempre ----
+    # Color elegido por el usuario (paleta FantasticFox1). El extremo claro del
+    # degradado se deriva aclarando el mismo color, para que combinen.
+    color_alto <- unname(paleta_fox[input$color_fox])
+    color_bajo <- colorspace::lighten(color_alto, 0.85)
+
+    # data_id = Especie hace que al pasar el mouse por cualquier mes de una especie
+    # se resalte su renglón completo, y el resto se atenúe.
+    p <- ggplot(FloFru1, aes(Mes, Especie)) +
+      geom_tile_interactive(
+        aes(fill = Val, data_id = Especie,
+            tooltip = paste0(Especie, "\n", Mes)),
+        colour = "white") +
+      scale_fill_gradient(low = color_bajo, high = color_alto) +
+      # duplica el eje de los meses para que aparezcan arriba y abajo
+      scale_x_discrete(sec.axis = dup_axis()) +
+      tema_graph4
+
+  } else {
+    # ---- Las dos épocas encimadas ----
+    # Cada época se dibuja como un triángulo rectángulo dentro de su celda: floración
+    # arriba-izquierda, fructificación abajo-derecha, partidas por la diagonal que va
+    # de la esquina inferior izquierda a la superior derecha. Las dos mitades juntas
+    # reconstruyen el cuadro completo, así que un mes con las dos épocas se ve como una
+    # celda dividida en diagonal, y un mes con una sola se ve medio lleno. No hace falta
+    # una regla aparte para el caso "ambas": sale solo de dibujar cada época por su lado.
+    #
+    # Los ejes pasan a ser CONTINUOS (no discretos) porque geom_polygon necesita
+    # coordenadas numéricas para los vértices. De paso evita la trampa documentada de
+    # combinar labels= con dup_axis() en una escala discreta.
+    # Un color por época, de la misma paleta FantasticFox1 que la otra vista. Si el
+    # usuario elige el mismo para las dos, la celda con ambas épocas se ve sólida: es
+    # su decisión y no se corrige, pero por eso los valores de arranque son dos
+    # colores que contrastan (ver colores_epoca_default en global.R).
+    colores_epoca <- c(
+      "Floración"      = unname(paleta_fox[input$color_flo]),
+      "Fructificación" = unname(paleta_fox[input$color_fru])
+    )
+
+    meses       <- levels(FloFru1$Mes)
+    esp_niveles <- sort(unique(FloFru1$Especie))   # mismo orden que daba el eje discreto
+
+    FloFru1$xi <- as.integer(FloFru1$Mes)
+    FloFru1$yi <- match(FloFru1$Especie, esp_niveles)
+
+    presentes <- FloFru1[FloFru1$Val > 0, ]
+    MEDIA <- 0.45   # media celda; el resto queda como separación, igual que el borde
+                    # blanco que geom_tile dibujaba en la otra vista
+
+    # Un triángulo son 3 vértices; `group` los une y debe ser único en toda la capa,
+    # por eso el id lleva el nombre de la época como prefijo.
+    triangulos <- do.call(rbind, lapply(EPOCAS, function(ep) {
+      d <- presentes[presentes$Epoca == ep, ]
+      if (nrow(d) == 0) return(NULL)
+      dx <- if (ep == "Floración") c(-1, -1,  1) else c(-1,  1,  1)
+      dy <- if (ep == "Floración") c(-1,  1,  1) else c(-1, -1,  1)
+      data.frame(
+        grupo   = rep(paste0(ep, "_", seq_len(nrow(d))), each = 3),
+        x       = rep(d$xi, each = 3) + rep(dx, nrow(d)) * MEDIA,
+        y       = rep(d$yi, each = 3) + rep(dy, nrow(d)) * MEDIA,
+        Epoca   = factor(ep, levels = EPOCAS),
+        Especie = rep(d$Especie, each = 3),
+        tip     = rep(paste0(d$Especie, "\n", d$Mes, " — ", ep), each = 3)
+      )
+    }))
+
+    # Fondo tenue en todas las celdas: mantiene visible la rejilla completa, para que
+    # se note dónde NO hay dato en vez de dejar huecos que parezcan margen.
+    fondo <- unique(FloFru1[, c("xi", "yi")])
+
+    p <- ggplot() +
+      geom_tile(data = fondo, aes(x = xi, y = yi),
+                fill = "#F4F4F4", width = 0.9, height = 0.9) +
+      geom_polygon_interactive(
+        data = triangulos,
+        aes(x = x, y = y, group = grupo, fill = Epoca,
+            data_id = Especie, tooltip = tip),
+        colour = NA) +
+      scale_fill_manual(values = colores_epoca, drop = FALSE) +
+      scale_x_continuous(breaks = seq_along(meses), labels = meses,
+                         sec.axis = dup_axis(), expand = expansion(add = 0.5)) +
+      scale_y_continuous(breaks = seq_along(esp_niveles), labels = esp_niveles,
+                         expand = expansion(add = 0.5)) +
+      labs(subtitle = "Las celdas partidas en diagonal son los meses con las dos épocas") +
+      tema_graph4
+  }
 
   girafe(
     ggobj = p,

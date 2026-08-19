@@ -96,6 +96,24 @@ grupo_domesticacion <- function(x) {
 colores_condicion <- c("Domesticadas" = "#B40F20", "Silvestres" = "#46ACC8")
 
 # ---------------------------------------------------------------------------
+# Gráfica de Floración y fructificación: opción de ver las dos épocas a la vez.
+# El valor va en una constante porque lo comparten el selector de ui.R y la lógica
+# de server.R, y un typo entre los dos no daría error, solo dejaría de funcionar.
+AMBAS_EPOCAS <- "Ambas"
+
+# Orden de las dos épocas. Fija qué triángulo es cuál (floración arriba-izquierda,
+# fructificación abajo-derecha) y el orden de la leyenda.
+EPOCAS <- c("Floración", "Fructificación")
+
+# Colores de arranque de cada época, como NOMBRES de paleta_fox: el usuario los cambia
+# desde los selectores, igual que en la vista de una sola época. Naranja y azul de
+# salida porque es cálido contra frío —contrastan entre sí y además se distinguen con
+# daltonismo rojo-verde, el más común— y porque dejan fuera el Rojo (#B40F20), que en
+# esta app ya significa "especie domesticada" (ver colores_condicion y la gráfica de
+# Altitud); reusarlo aquí con otro sentido rompería el código de color.
+colores_epoca_default <- c("Floración" = "Naranja", "Fructificación" = "Azul")
+
+# ---------------------------------------------------------------------------
 # Altitud de las capitales de los 32 estados (metros sobre el nivel del mar).
 # Sirven como línea de referencia en la gráfica de Altitud: la gente ubica su
 # ciudad y ve de inmediato qué frijoles crecen a esa altura.
