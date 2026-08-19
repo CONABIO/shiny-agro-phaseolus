@@ -1696,3 +1696,299 @@ en `styles.css`:
   max-width: 100%;
 }
 ```
+
+---
+
+# Segunda ronda: comentarios de los colegas
+
+Rama de trabajo: **`frijol-comentarios`** (a partir de `main`, ya con el PR #1 mergeado).
+
+## Waffle: colorear por especie o por domesticadas/silvestres
+
+**El comentario:** que se distinga en la gráfica cuáles especies son domesticadas.
+La primera idea fue marcarlas en la leyenda (rojo, como en Altitud); el usuario la
+cambió por algo mejor: **un selector de modo de color**, como el de estado, con dos
+vistas.
+
+| | Especie (lo de antes) | Domesticadas y silvestres |
+|---|---|---|
+| Leyenda | las N especies, en cursiva | 2 entradas, sin cursiva |
+| Colores | la paleta elegida | `#B40F20` / `#46ACC8` |
+| Selector de paleta | visible | oculto (no aplica) |
+
+El rojo es **el mismo `#B40F20` que Altitud** usa para resaltar las domesticadas, para
+que el código de color signifique lo mismo en toda la app.
+
+### ⚠️ "Domesticado" existe DOS veces en los datos, y no coinciden
+
+Es la trampa central de este cambio, y no da ningún error: hay que elegir a mano.
+
+| | Qué es | Categorías |
+|---|---|---|
+| `especies_domesticadas` (global.R) | atributo de la **especie** | 5 domesticadas / 55 silvestres |
+| `Habitat.1` | atributo de **cada registro de colecta** | Cultivado 1,520 · Escapado 171 · Silvestre 4,011 |
+
+Chocan de frente:
+
+```
+                                       Cultivado  Escapado  Silvestre
+Phaseolus vulgaris                          1096        73        322
+Phaseolus coccineus                          183        57        865   <-- 
+Phaseolus dumosus                            131         0          1
+Phaseolus lunatus var. lunatus                84         2          0
+Phaseolus acutifolius var. acutifolius         5         0         51   <-- 
+```
+
+*P. coccineus* es especie domesticada, pero **865 de sus 1,105 registros se colectaron
+como silvestres**. Según cuál se use, el waffle de un mismo estado dice cosas distintas.
+
+→ Se eligió **por especie**, por tres razones: es lo que preguntaban los colegas
+("en el listado de especies, cuáles son domesticadas"), es lo que ya usa Altitud, y
+permite conservar la rejilla intacta (ver abajo). La otra lectura —colorear por
+`Habitat.1`— es igual de válida como pregunta, pero obligaría a reconstruir la rejilla
+agrupando por condición y dejaría de ser comparable con la vista por especie.
+
+### La rejilla NO cambia entre modos
+
+Decisión de diseño, confirmada con el usuario: se sigue armando por especie y en el
+mismo orden de frecuencia. Al cambiar el selector la figura **se recolorea sin
+reacomodarse**, así que las dos vistas son comparables cuadro por cuadro.
+
+El costo es que los rojos no quedan en un bloque sólido: en Oaxaca salen 2 columnas
+rojas, luego azules, otras 2 rojas y dos rojos sueltos. Se evaluó reagrupar para que
+todo el rojo quedara junto (se lee la proporción de un golpe) y **el usuario prefirió
+conservar el orden por proporción**.
+
+`data_id` y `tooltip` **siguen siendo por especie en los dos modos**, así que el
+resaltado al pasar el mouse no se pierde al colorear por condición: se sigue pudiendo
+señalar un cuadro y saber qué especie es.
+
+```r
+por_especie <- !identical(input$color_waffle, "Domesticadas y silvestres")
+celdas$relleno <- if (por_especie) celdas$Especie
+                  else grupo_domesticacion(celdas$Especie)
+```
+
+El relleno se resuelve **al final**, ya armada la rejilla (incluida la fila de las
+especies del cuadro multicolor), para que ambos modos partan de las mismas celdas.
+
+Detalles que importan:
+- `drop = FALSE` en el modo de condición mantiene las dos entradas de la leyenda aunque
+  un estado no tenga domesticadas — así la leyenda no cambia de forma al moverse entre
+  estados.
+- La **cursiva se apaga** en ese modo: es la convención para nombres científicos, y
+  "Domesticadas"/"Silvestres" no lo son.
+- La nota al pie deja de decir "el cuadro multicolor" y dice "el último cuadro": al
+  colorear por condición ese cuadro se pinta con solo dos colores y suele verse casi
+  sólido, así que se le nombra por su posición y no por su aspecto.
+
+Verificado contra los datos: Oaxaca 42 cuadros rojos (42.5% calculado), Morelos 70
+(70.1%), Jalisco 41 (41.1%).
+
+### ⚠️ La nota al pie se estaba cortando desde antes
+
+Encontrado al medir en el navegador, no a simple vista. La nota se salía del contenedor:
+
+| Modo | Se salía |
+|---|---|
+| Por especie (**ya pasaba antes de este cambio**) | 15 px |
+| Por condición | 96 px |
+
+**La causa es `coord_equal()`**: fija el ancho del panel, así que el espacio horizontal
+sobrante recentra la figura y la recorre a la derecha. Cuánto se recorre depende del
+ancho de la leyenda — que varía con el número de especies del estado *y* con el modo de
+color. Medido: el título pasa de `x = 608` a `x = 707` al cambiar a la leyenda de 2
+entradas, y la nota se va con él.
+
+Por eso no sirve mover la nota ni acortar su texto: la solución es **envolverla a un
+ancho fijo**, que no depende de cuánto se recorra la figura.
+
+```r
+ANCHO_NOTA <- 100   # caracteres
+partes <- c("El ... y abajo se muestran una por una:",
+            paste0(paste(abreviar_especie(excluidas$Especie), collapse = ", "), "."))
+paste(unlist(lapply(partes, strwrap, width = ANCHO_NOTA)), collapse = "\n")
+```
+
+Se envuelve **cada parte por separado** para que la lista de especies siga arrancando en
+renglón propio (`strwrap` sobre el texto completo se comería ese salto de línea).
+Después: sobra holgura en los dos modos (219 px y 324 px).
+
+**La lección:** un elemento que "apenas cabe" es un bug esperando a que cambie cualquier
+cosa del layout. Los 15 px de sobra no se notaban, pero era el mismo defecto.
+
+## Floración y fructificación: las dos épocas a la vez, partidas en diagonal
+
+**El comentario:** poder ver floración y fructificación al mismo tiempo, y que los meses
+con las dos se marquen dividiendo la celda en diagonal, en dos triángulos rectángulos.
+
+Se agregó una tercera opción **"Ambas"** al selector de Época.
+
+### Primero: `Val` es binario, no un conteo
+
+Antes de diseñar nada. La gráfica usaba `scale_fill_gradient()`, lo que hacía pensar en
+una intensidad — pero `Val` solo toma **0 o 1** (827 ceros y 613 unos). El degradado
+llevaba tiempo pintando nada más presencia/ausencia con dos tonos.
+
+Saberlo simplificó todo: no hay intensidad que preservar al partir la celda en dos.
+
+El traslape resultó ser la norma, no la excepción. En silvestres:
+
+| | Celdas |
+|---|---|
+| Solo floración | 44 |
+| Solo fructificación | 25 |
+| **Ambas** | **238** |
+
+### El caso "ambas" no necesita una regla propia
+
+Cada época se dibuja como un triángulo rectángulo dentro de su celda —**floración
+arriba-izquierda, fructificación abajo-derecha**— partidos por la diagonal que va de la
+esquina inferior izquierda a la superior derecha.
+
+Las dos mitades juntas reconstruyen el cuadro completo, así que la celda dividida en
+diagonal **sale sola** de dibujar cada época por su lado. No hay un `if` que detecte el
+caso "las dos".
+
+```r
+dx <- if (ep == "Floración") c(-1, -1,  1) else c(-1,  1,  1)
+dy <- if (ep == "Floración") c(-1,  1,  1) else c(-1, -1,  1)
+```
+
+**Un mes con una sola época queda como MEDIA celda, no como cuadro completo.** No estaba
+en el comentario; se decidió así y el usuario lo confirmó ("si ponemos cuadros completos
+se ve disparejo"). El argumento: con el cuadro entero, un mes con solo floración se vería
+tan lleno como uno con las dos, y "medio lleno" vs "diagonal" dejaría de ser
+inconfundible.
+
+Las celdas sin ningún dato llevan un fondo gris tenue (`#F4F4F4`), para que se note dónde
+NO hay dato en vez de dejar huecos que parezcan margen.
+
+### Los ejes tienen que pasar a continuos
+
+`geom_polygon` necesita coordenadas numéricas para los vértices, y **no se puede mezclar
+una escala discreta con coordenadas continuas**. Así que en este modo:
+
+```r
+scale_x_continuous(breaks = seq_along(meses), labels = meses,
+                   sec.axis = dup_axis(), expand = expansion(add = 0.5))
+scale_y_continuous(breaks = seq_along(esp_niveles), labels = esp_niveles,
+                   expand = expansion(add = 0.5))
+```
+
+Bonus: con escalas **continuas**, `labels =` junto a `dup_axis()` funciona sin problema —
+justo la combinación que revienta en escalas discretas (ver la sección de `graph4` más
+arriba, donde hubo que renombrar los niveles del factor para esquivarlo).
+
+⚠️ **Hay que reproducir el orden que daba el eje discreto**, o cambiar de época
+reacomodaría los renglones. El eje discreto ordena con `factor()`, que usa el locale; se
+replica con `sort(unique(Especie))` y `match()`. Verificado que `identical()` en los dos
+Tipos, no a ojo.
+
+### Dos selectores de color, no dos colores fijos
+
+Primera versión: dos colores fijos. El usuario lo corrigió — **"la paleta debe seguir
+activa"**. Con dos épocas hacen falta dos colores, así que en ese modo el selector único
+se cambia por dos (`color_flo` y `color_fru`), los dos con la misma paleta FantasticFox1.
+
+Se alternan con `conditionalPanel` en vez de renombrar el mismo control, para que cada
+modo conserve su propia elección al ir y venir.
+
+Arrancan en **Naranja y Azul**: cálido contra frío, se distinguen con daltonismo
+rojo-verde, y dejan fuera el Rojo `#B40F20`, que en esta app ya significa "especie
+domesticada" — reusarlo aquí con otro sentido rompería el código de color.
+
+Nada impide elegir el mismo color para las dos, y entonces la celda con ambas épocas se
+ve sólida. Es decisión del usuario y no se corrige; por eso los valores de arranque
+contrastan.
+
+### El margen del alto no contemplaba la leyenda
+
+`alto_graph4()` sumaba 70 px fijos por el título y los dos ejes de meses. En modo "Ambas"
+aparecen además una leyenda y un subtítulo, que le robaban alto a los renglones. Se suman
+60 px más solo en ese modo.
+
+### Verificación
+
+Los triángulos cuadran al número con los datos:
+
+| | En el SVG | Esperados |
+|---|---|---|
+| Silvestres | 545 | 44 + 25 + 238×2 = 545 |
+| Cultivados | 68 | 68 |
+
+⚠️ Al contar `polygon` en el DOM salían 551. **Los 6 de más son los iconos de la barra de
+herramientas de ggiraph** (descargar 2, pantalla completa 4), que son SVG aparte dentro
+del mismo contenedor. Hay que contar dentro de `svg.ggiraph-svg`, o filtrar por
+`polygon[data-id]`.
+
+El modo de una sola época quedó intacto: 660 celdas en silvestres (55 × 12), 60 en
+cultivados (5 × 12), con su selector de color único de vuelta.
+
+## Datos: a las variedades les faltaba el género
+
+En `data/Flor_fruc.xlsx`, las filas de variedad traen el **epíteto de la especie en la
+columna del género**, así que el eje Y mostraba `lunatus lunatus` y
+`acutifolius acutifolius`. No era nuevo — ya se veía así en producción — y pesa porque
+dos de esas cuatro son de las cinco especies domesticadas.
+
+```r
+es_variedad <- FloFru$NombreCategoriaTaxonomica == "variedad"
+FloFru$Nombre_1_Nombre[es_variedad] <- paste("Phaseolus",
+                                             FloFru$Nombre_1_Nombre[es_variedad])
+```
+
+⚠️ **Se antepone el género, no se sustituye la columna.** Sustituirla daría "Phaseolus
+acutifolius" y se perdería el epíteto de la variedad, que es lo único que distingue la
+forma cultivada de la silvestre (`var. tenuifolius`, `var. silvester`).
+
+Queda como **"Phaseolus lunatus lunatus"**, sin el `var.` de la forma taxonómica
+completa, porque ese nombre no cabe en el eje. Es decisión del autor de la app.
+
+El arreglo alcanza a las **cuatro** filas de variedad, no solo a las dos domesticadas.
+Verificado: los 57 nombres empiezan con "Phaseolus", la etiqueta más larga pasa de 22 a
+33 caracteres y sigue cabiendo (ggplot ensancha el margen solo), y las cuatro variedades
+quedan en su lugar alfabético correcto.
+
+## Alcance de los datos de fenología (pregunta del usuario)
+
+**`Flor_fruc.xlsx` no tiene nada estatal: son datos generales para todo el país.**
+
+120 filas × 19 columnas, y **ninguna columna geográfica** — ni estado, ni municipio, ni
+coordenadas:
+
+```
+NombreCategoriaTaxonomica, Nombre_1_Nombre, Nombre_Nombre,
+Tipo, Estatus, Epoca, Observaciones, + los 12 meses
+```
+
+Las 120 filas son 60 registros de especie × 2 épocas. `Observaciones` guarda el rango en
+texto ("Noviembre-Febrero", "Agosto-Septiembre").
+
+La fenología está descrita **a nivel especie**, no de población ni de región. Por eso esa
+pestaña solo tiene filtros de Época y Tipo: **no se le puede agregar un filtro de estado
+sin datos nuevos**, a diferencia del waffle y de Distribución, que salen de `Mex3`, donde
+cada registro trae su estado.
+
+Detalle: hay 57 nombres únicos pero 60 registros por época, o sea que **3 taxones
+aparecen dos veces**, una como Cultivados y otra como Silvestres. Es correcto (una
+especie puede tener las dos formas) y no estorba porque el filtro de Tipo las separa.
+
+## Nota de método: el clic por JavaScript no reanuda los outputs
+
+Volvió a morder, y vale reforzar lo que ya decía la bitácora. Al verificar en Chrome,
+cambiar de pestaña con `document.querySelector(...).click()` **carga los controles pero
+deja la gráfica en blanco**: Shiny no reanuda el output suspendido, y el log de la app no
+muestra ningún error, así que parece un bug del código.
+
+→ Para cambiar de pestaña, **clic real por coordenadas**. Para cambiar el valor de un
+control, la API del widget sí funciona bien:
+
+```js
+$('#Epoca')[0].selectize.setValue('Ambas');   // selectInput usa selectize
+$('#color_flo').val('Rojo').trigger('change'); // pickerInput
+```
+
+⚠️ Y ojo al inspeccionar un `selectInput`: el `<select>` del DOM **conserva solo la opción
+seleccionada**, porque selectize dibuja su propia lista. Leer `el.options` hace creer que
+el selector tiene una sola opción.
