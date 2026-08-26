@@ -37,3 +37,7 @@ data/AGEEML_*.txt
 # Archivo de trabajo local. La app no lo lee (verificado: sin referencias en
 # global.R, ui.R ni server.R), asi que no hace falta versionarlo.
 especies_oswald.xlsx
+
+# Carpeta de trabajo local para el traspaso del basemap. No forma parte
+# de la app; se ignora mientras se decide si algo de aqui se integra.
+traspaso_basemap/
