@@ -131,8 +131,46 @@ shinyServer(
       # zoomDelta = 1 se deja explícito para que los botones + y − sigan moviéndose un
       # nivel completo y no de cuarto en cuarto.
       mapa <- leaflet(options = leafletOptions(zoomSnap = 0.25, zoomDelta = 1)) %>%
-        addProviderTiles(providers$CartoDB.Positron, group = "Mapa") %>%
+        # El fondo gris de Esri viene en DOS capas y las dos van en el grupo "Mapa"
+        # para que se prendan y apaguen juntas: la base pone colores, relieve y agua,
+        # pero NO rotula; los nombres de ciudades viven en World_Light_Gray_Reference
+        # y hay que montarla encima a mano. Sin ella el mapa queda mudo.
+        #
+        # maxNativeZoom = 16 es imprescindible: las teselas de Esri se acaban en z16 y
+        # sin él el fondo se queda EN BLANCO al pasar de ahí. Con él, leaflet estira la
+        # tesela de z16 —se ve borrosa, pero se ve—, y para el detalle real a ese nivel
+        # está la capa de "Foto aérea", que baja bastante más.
+        #
+        # Antes esto era CartoDB.Positron, hasta que CARTO empezó a estampar la marca
+        # "API KEY REQUIRED" dentro del PNG de sus teselas gratuitas. La tesela responde
+        # HTTP 200 y es una imagen válida, así que no hay error que capturar: la única
+        # señal es la leyenda atravesada en el fondo. En local puede verse limpio por
+        # caché; en incógnito aparece. Ver también la capa div_estatal más abajo.
+        addProviderTiles(
+          providers$Esri.WorldGrayCanvas, group = "Mapa",
+          options = providerTileOptions(maxNativeZoom = 16, maxZoom = 19)) %>%
+        addTiles(
+          urlTemplate = paste0("https://server.arcgisonline.com/ArcGIS/rest/",
+                               "services/Canvas/World_Light_Gray_Reference/",
+                               "MapServer/tile/{z}/{y}/{x}"),
+          group = "Mapa",
+          options = tileOptions(maxNativeZoom = 16, maxZoom = 19),
+          attribution = "Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ") %>%
         addProviderTiles(providers$Esri.WorldImagery, group = "Foto aérea") %>%
+        # Las divisiones estatales van en su propio pane, entre el de las teselas (200)
+        # y el de los vectores (overlayPane, 400): encima del fondo, debajo de los
+        # puntos. OJO con el 405 que se usa en otros proyectos —ahí las capas de datos
+        # son marcadores, que viven en el markerPane (600)— porque aquí los registros
+        # son addCircles y esos caen en el overlayPane: con 405 las líneas quedarían
+        # ENCIMA de los puntos de colecta.
+        #
+        # opacity = 1 es a propósito: con opacidad menor la línea se funde con el fondo
+        # claro y el gris que se acaba viendo no es el del hex.
+        addMapPane("division", zIndex = 250) %>%
+        addPolylines(
+          data = div_estatal,
+          color = "#ADADAD", weight = 0.8, opacity = 1,
+          options = pathOptions(pane = "division", interactive = FALSE)) %>%
         addCircles(data = Tabla3, group = "Circles",
                    lng = ~Longitud, lat = ~Latitud,
                    color = unname(colores[as.character(Tabla3$Especie)]),

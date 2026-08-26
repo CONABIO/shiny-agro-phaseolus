@@ -22,7 +22,10 @@ apt_install \
     libharfbuzz-dev \
     libglpk-dev \
     libxml2-dev \
-    libproj-dev
+    libproj-dev \
+    libgdal-dev \
+    libgeos-dev \
+    libudunits2-dev
 
 install2.r --error --skipinstalled -n "$NCPUS" \
     ash \
@@ -44,6 +47,7 @@ install2.r --error --skipinstalled -n "$NCPUS" \
     plotly \
     plyr \
     proj4 \
+    sf \
     shiny \
     shinydashboard \
     shinydashboardPlus \
@@ -97,3 +101,12 @@ echo -e "Check the datamods package...\n"
 R -q -e "library(datamods)"
 
 echo -e "\nInstall datamods package, done!"
+
+# sf necesita GDAL/GEOS/PROJ del sistema y truena en tiempo de carga si falta
+# alguno, no al instalarse. Se comprueba aqui para que la imagen falle al
+# construirse y no en el arranque de la app.
+echo -e "Check the sf package...\n"
+
+R -q -e "library(sf)"
+
+echo -e "\nInstall sf package, done!"

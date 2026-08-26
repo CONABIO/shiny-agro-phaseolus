@@ -13,6 +13,7 @@ library(ggmap)
 library(ggalt)
 library(colorspace)
 library(wesanderson)
+library(sf)
 
 # Paleta FantasticFox1 de wesanderson, para que el usuario elija el color de la
 # gráfica de Floración y fructificación. Los nombres son los que ve en el selector.
@@ -307,7 +308,7 @@ especies_con_gradiente <- local({
 #  - Paletas 2 y 3: armadas encadenando 10 paletas de wesanderson cada una y luego
 #    (a) quitando los colores a menos de 10 de distancia perceptual entre sí,
 #    (b) quitando los casi blancos y casi negros, que sobre el mapa claro de
-#        CartoDB.Positron no se verían, y
+#        gris claro de Esri no se verían, y
 #    (c) reordenando para que cada color sea el más lejano posible del anterior,
 #        de modo que al reciclarse sobre las 60 especies los vecinos contrasten.
 #    No comparten ningún color entre ellas.
@@ -347,6 +348,29 @@ nombres_paletas_mapa <- names(paletas_mapa)
 # Nota: los rangos altitudinales por especie (antes precalculados aquí como
 # Mex5/Mex7/Mex8/Mex9) ahora se calculan en server.R dentro del reactivo Mex10(),
 # porque dependen de los estados que elija el usuario.
+
+# ---------------------------------------------------------------------------
+# Divisiones estatales para el fondo del mapa de Distribucion.
+#
+# Se dibujan a mano porque el basemap ya no las trae. CartoDB.Positron si las
+# rotulaba, pero CARTO empezo a estampar "API KEY REQUIRED" dentro de sus teselas
+# gratuitas y hubo que cambiar a la cartografia gris de Esri, que dibuja los limites
+# estatales de EUA y deja Mexico sin ninguna linea interior. Ningun basemap sin llave
+# da la combinacion "gris sobrio + divisiones de Mexico".
+#
+# El archivo trae SOLO las lineas interiores (division politica generalizada de INEGI,
+# dest24gw, simplificada a 150 m: 15,798 vertices, 174 KB). No son los 32 poligonos,
+# a proposito: asi cada frontera se dibuja una sola vez y no dos, una por estado
+# vecino. La costa y la frontera con EUA las pone el basemap.
+#
+# Se lee aqui, una sola vez, y no dentro de renderLeaflet: ese bloque se reconstruye
+# con cada cambio de filtro o de paleta.
+#
+# Ojo si algun dia se usa para algo que NO sea dibujar (recortar registros por
+# entidad, asignar estado a un punto): al generalizar cada entidad por separado, INEGI
+# rompio el empate de bordes y en 11 pares de vecinos queda una rendija de hasta 4-5
+# km. Para calcular hace falta el marco geoestadistico no generalizado.
+div_estatal <- readRDS("data/div_estatal.rds")
 
 FloFru <- read_xlsx("data/Flor_fruc.xlsx", sheet = "Rdata", col_names = T)
 
