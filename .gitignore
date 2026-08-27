@@ -41,3 +41,8 @@ especies_oswald.xlsx
 # Carpeta de trabajo local para el traspaso del basemap. No forma parte
 # de la app; se ignora mientras se decide si algo de aqui se integra.
 traspaso_basemap/
+
+# Documentos de trabajo local (PDFs, borradores, material para discutir). Nada
+# de aqui lo lee la app ni va al deploy. Es una carpeta generica a proposito:
+# asi los documentos nuevos no obligan a tocar este archivo cada vez.
+documentos/
