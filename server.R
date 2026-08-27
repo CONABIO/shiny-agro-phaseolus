@@ -428,6 +428,23 @@ output$graph4 <- renderGirafe({
       L
     })
 
+    # Especies que quedan FUERA de la montaña: estan en los estados elegidos, pero
+    # NINGUNO de sus registros trae altitud, asi que sus tres estadisticos salen no
+    # finitos y el filter() de Mex10() las descarta.
+    #
+    # Se listan al pie porque si no la ausencia es invisible: la especie simplemente no
+    # aparece, sin decir por que. Con la seleccion completa de estados la que falta es
+    # P. leptophyllus, que tiene un solo registro en toda la base y viene sin altitud.
+    #
+    # Depende de los estados elegidos, igual que Mex10(): una especie puede tener
+    # altitud en un estado y no en otro.
+    especies_sin_altitud <- reactive({
+      req(input$Estado_alt)
+      d <- Mex3[Mex3$Estado %in% input$Estado_alt, ]
+      con_dato <- unique(as.character(d$Especie[!is.na(d$Altitud)]))
+      sort(setdiff(unique(as.character(d$Especie)), con_dato))
+    })
+
     DESPEGUE <- 200  # metros que el nombre se levanta sobre su propio valor
 
     # Alto de la gráfica: ~15 px por especie es lo que necesita un renglón de texto
@@ -448,6 +465,8 @@ output$graph4 <- renderGirafe({
       validate(need(nrow(LL) > 0,
                     "No hay datos de altitud para los estados seleccionados."))
 
+      # Cuantos taxones se dibujan. Ya no es un contador para el lector: solo sirve
+      # para cerrar la silueta de la montaña un poco despues del ultimo punto.
       n <- nrow(LL)
 
       # La montaña se dibuja en TRES capas anidadas (mínimo, promedio y máximo), para
@@ -555,22 +574,21 @@ output$graph4 <- renderGirafe({
         # una paleta ni una leyenda
         scale_colour_identity() +
         scale_discrete_identity(aesthetics = "fontface") +
-        # Contador de especies visibles, arriba a la izquierda: es la zona vacía de la
-        # figura, porque la montaña asciende de izquierda a derecha. Cambia al mover el
-        # filtro de estados.
-        # Se ancla a la ALTURA DE LA ESPECIE MÁS ALTA (no al borde del panel) para que
-        # se lea como parte de la gráfica y no como una tercera línea del título.
-        # Va al final del + para quedar dibujado ENCIMA de todo: ggrepel no sabe que
-        # existe y podría mandar un nombre a esa esquina.
-        annotate("text", x = -Inf, y = max(LL$ordenar), label = n,
-                 hjust = -0.25, vjust = 0.5,
-                 size = 20, fontface = "bold", colour = "#7A5C2E") +
-        annotate("text", x = -Inf, y = max(LL$ordenar),
-                 label = if (n == 1) "especie" else "especies",
-                 # vjust se mide en altos de SU PROPIA letra, no de la del número:
-                 # por eso hace falta un valor grande para librar los dígitos
-                 hjust = -0.32, vjust = 4,
-                 size = 6, colour = "#7A5C2E") +
+        # Aqui vivia un contador de especies, en la esquina vacia de arriba a la
+        # izquierda. Se quito (26-ago-2026) porque no habia un numero correcto que
+        # poner: la grafica dibuja un punto por TAXON y dos especies van desglosadas en
+        # sus variedades, asi que contar renglones da 59 y contar especies da 56. El
+        # nomenclator de Delgado-Salinas (Apéndice 2 del informe JE014) lista 57
+        # taxones, que son 55 especies. Los tres numeros son defendibles y ninguno se
+        # explica solo en una esquina de la figura.
+        #
+        # Ademas "especie" no puede significar lo mismo en las dos partes de esta
+        # grafica: el resaltado de domesticadas NECESITA el nivel de variedad, porque
+        # lo cultivado es var. acutifolius y var. lunatus, no la especie entera (ver
+        # especies_domesticadas en global.R).
+        #
+        # Lo que si se conserva es el pie: dice cuales quedaron fuera por no tener
+        # altitud, que era la unica parte de la cuenta que si tenia una respuesta clara.
         scale_y_continuous(breaks = seq(0, 3000, 1000),
                            labels = paste0(seq(0, 3000, 1000), " m"),
                            limits = c(0, techo), expand = c(0, 0)) +
@@ -590,6 +608,17 @@ output$graph4 <- renderGirafe({
                                if (isTRUE(input$domesticadas))
                                  "\nEn rojo y negritas, las especies domesticadas"
                                else ""),
+             # Nota al pie de las que no se pudieron dibujar. NULL cuando no falta
+             # ninguna: asi el pie no aparece vacio.
+             caption = {
+               fuera <- especies_sin_altitud()
+               if (length(fuera) == 0) NULL
+               else paste0(if (length(fuera) == 1) "Queda fuera 1 especie sin dato de altitud: "
+                           else paste0("Quedan fuera ", length(fuera),
+                                       " especies sin dato de altitud: "),
+                           paste(abreviar_especie(fuera), collapse = ", "),
+                           ".")
+             },
              x = NULL, y = NULL) +
         theme_minimal() +
         theme(plot.title = element_text(size = 18, face = "bold", hjust = 0.5),
@@ -600,6 +629,11 @@ output$graph4 <- renderGirafe({
               axis.text.x = element_blank(),
               axis.ticks.x = element_blank(),
               axis.text.y = element_text(size = 12),
+              # mismo estilo de pie que la grafica de gradiente, para que las dos
+              # notas se lean igual
+              plot.caption = element_text(colour = "grey45", hjust = 0, size = 11,
+                                          face = "italic"),
+              plot.caption.position = "plot",
               legend.position = "none")
 
       # Se entrega como SVG interactivo. hover_css aplica al elemento bajo el mouse y
